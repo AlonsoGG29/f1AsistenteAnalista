@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+  /* F1 Official Colors */
+  --f1-red: #E8002D;
+  --f1-red-dark: #B8001F;
+  --f1-red-glow: rgba(232, 0, 45, 0.25);
+  --f1-white: #FFFFFF;
+  --f1-black: #06050A;
+  --f1-carbon: #0D0D0F;
+  --f1-surface: #131318;
+  --f1-surface-2: #1A1A22;
+  --f1-surface-3: #222230;
+  --f1-border: rgba(255,255,255,0.07);
+  --f1-border-bright: rgba(255,255,255,0.15);
+  --f1-text: #F0EEF5;
+  --f1-text-muted: rgba(240,238,245,0.5);
+  --f1-text-dim: rgba(240,238,245,0.3);
+
+  /* Team Colors */
+  --ferrari: #E8002D;
+  --redbull: #3671C6;
+  --mercedes: #27F4D2;
+  --mclaren: #FF8000;
+  --alpine: #FF87BC;
+  --aston: #358C75;
+  --haas: #B6BABD;
+  --williams: #64C4FF;
+  --visa: #2B4562;
+  --sauber: #00E701;
+
+  /* Accent */
+  --gold: #FFD700;
+  --silver: #C0C0C0;
+  --bronze: #CD7F32;
+
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 16px;
+  color-scheme: dark;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--f1-black);
+  color: var(--f1-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--f1-carbon); }
+::-webkit-scrollbar-thumb { background: var(--f1-red); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--f1-red-dark); }
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Mono font for numbers/stats */
+.mono { font-family: 'Share Tech Mono', monospace; }
+
+/* Utility: F1 Red gradient text */
+.text-f1 {
+  background: linear-gradient(135deg, var(--f1-red), #FF6B6B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card base */
+.card {
+  background: var(--f1-surface);
+  border: 1px solid var(--f1-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.card-highlight {
+  background: var(--f1-surface-2);
+  border: 1px solid var(--f1-border-bright);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Red accent strip (top border) */
+.card-red::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: var(--f1-red);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--f1-red);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-primary:hover { background: var(--f1-red-dark); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--f1-text-muted);
+  border: 1px solid var(--f1-border);
+  padding: 8px 16px;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+.btn-ghost:hover {
+  border-color: var(--f1-red);
+  color: var(--f1-red);
+}
+
+/* Input */
+.input-f1 {
+  background: var(--f1-surface-2);
+  border: 1px solid var(--f1-border);
+  color: var(--f1-text);
+  padding: 10px 14px;
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 14px;
+  border-radius: 2px;
+  width: 100%;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.input-f1:focus { border-color: var(--f1-red); }
+.input-f1::placeholder { color: var(--f1-text-dim); }
+
+/* Select */
+select.input-f1 { cursor: pointer; }
+
+/* Stat box */
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--f1-text-dim);
+}
+.stat-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 24px;
+  color: var(--f1-text);
+  line-height: 1;
+}
+.stat-value.red { color: var(--f1-red); }
+.stat-value.gold { color: var(--gold); }
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.badge-red { background: rgba(232,0,45,0.15); color: var(--f1-red); border: 1px solid rgba(232,0,45,0.3); }
+.badge-green { background: rgba(39,244,210,0.1); color: #27F4D2; border: 1px solid rgba(39,244,210,0.2); }
+.badge-gold { background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.2); }
+.badge-gray { background: rgba(255,255,255,0.05); color: var(--f1-text-muted); border: 1px solid var(--f1-border); }
+
+/* Loading spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--f1-border);
+  border-top-color: var(--f1-red);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Divider with label */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--f1-text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--f1-border);
+}
+
+/* Probability bar */
+.prob-bar {
+  height: 6px;
+  background: var(--f1-surface-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--f1-red-dark), var(--f1-red));
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Chat bubble */
+.chat-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.chat-bubble.user {
+  background: var(--f1-red);
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 0;
+}
+.chat-bubble.assistant {
+  background: var(--f1-surface-2);
+  border: 1px solid var(--f1-border);
+  align-self: flex-start;
+  border-bottom-left-radius: 0;
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+.slide-in { animation: slideIn 0.3s ease forwards; }
+
+/* Grid system */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+@media (max-width: 768px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* Recharts customization */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(255,255,255,0.05) !important;
+}
+.recharts-text { fill: var(--f1-text-muted) !important; font-family: 'Share Tech Mono', monospace !important; font-size: 11px !important; }
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--f1-surface-2) !important;
+  border: 1px solid var(--f1-border-bright) !important;
+  border-radius: 4px !important;
+  color: var(--f1-text) !important;
+}

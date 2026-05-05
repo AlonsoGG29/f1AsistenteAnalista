@@ -1,0 +1,19 @@
+# ── ML ────────────────────────────────────────────────────────────────────────
+scikit-learn==1.5.2
+xgboost==2.1.1          # opcional pero recomendado; si falla instalar, el código usa sklearn
+numpy==1.26.4
+pandas==2.2.3
+joblib==1.4.2
+
+# ── Notebook ──────────────────────────────────────────────────────────────────
+jupyter==1.1.1
+matplotlib==3.9.2
+
+# ── (ya en requirements.txt del backend, repetidos por claridad) ──────────────
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
