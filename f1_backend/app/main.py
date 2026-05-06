@@ -46,6 +46,41 @@ app.include_router(queries.router)
 app.include_router(analysis.router)
 
 
+# ── ML Predictions (Mock) ───────────────────────────────────────────────────────
+@app.get("/api/predict/status", tags=["Predicciones ML"])
+async def model_status():
+    """Estado de carga de los modelos ML"""
+    return {
+        "safety_car": {"loaded": False, "message": "Entrenar con: python scripts/train_models.py"},
+        "mechanical_failure": {"loaded": False, "message": "Entrenar con: python scripts/train_models.py"},
+        "podium": {"loaded": False, "message": "Entrenar con: python scripts/train_models.py"},
+    }
+
+
+@app.post("/api/predict/safety-car", tags=["Predicciones ML"])
+async def predict_safety_car(payload: dict):
+    """Predicción de Safety Car"""
+    return {"probability": 0.0, "label": "No", "message": "Modelos no entrenados"}
+
+
+@app.post("/api/predict/mechanical-failure", tags=["Predicciones ML"])
+async def predict_mechanical_failure(payload: dict):
+    """Predicción de falla mecánica"""
+    return {"probability": 0.0, "label": "No", "message": "Modelos no entrenados"}
+
+
+@app.post("/api/predict/podium", tags=["Predicciones ML"])
+async def predict_podium(payload: dict):
+    """Predicción de podium"""
+    return {"probability": 0.0, "label": "No", "message": "Modelos no entrenados"}
+
+
+@app.get("/api/predict/feature-importance/{model}", tags=["Predicciones ML"])
+async def feature_importance(model: str):
+    """Importancia de features"""
+    return {"features": [], "message": "Modelos no entrenados"}
+
+
 @app.get("/health", tags=["Sistema"])
 async def health_check():
     return {"status": "ok", "version": "1.0.0", "env": settings.APP_ENV}
