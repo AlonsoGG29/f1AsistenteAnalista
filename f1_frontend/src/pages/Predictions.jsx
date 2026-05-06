@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, ProbabilityBar, Select } from '../components/UI.jsx';
-import { predictSafetyCar, predictMechanicalFailure, predictPodium, getMLStatus, getFeatureImportance } from '../services/api.js';
+import { predictSafetyCar, predictMechanicalFailure, predictPodium, getMLStatus, getFeatureImportance } from '../api/api.js';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Cpu, AlertTriangle, Shield, Trophy } from 'lucide-react';
 

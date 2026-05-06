@@ -1,7 +1,7 @@
 // Constructors.jsx
 import { useState, useEffect } from 'react';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, EmptyState, TeamDot, Input, Select } from '../components/UI.jsx';
-import { getConstructors, getConstructor, getConstructorSeasonStats } from '../services/api.js';
+import { getConstructors, getConstructor, getConstructorSeasonStats } from '../api/api.js';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Search, ChevronRight } from 'lucide-react';
 

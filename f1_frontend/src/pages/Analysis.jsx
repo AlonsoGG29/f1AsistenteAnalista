@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, EmptyState, Select, Input, YEARS } from '../components/UI.jsx';
-import { getDrivers, getHeadToHead, getDriverLapProgression, getRaces, getRaceLapTimes } from '../services/api.js';
+import { getDrivers, getHeadToHead, getDriverLapProgression, getRaces, getRaceLapTimes } from '../api/api.js';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   ScatterChart, Scatter, CartesianGrid

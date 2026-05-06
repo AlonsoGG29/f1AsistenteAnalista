@@ -5,7 +5,7 @@ import {
   BarChart, Bar, Cell
 } from 'recharts';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, PositionBadge, TeamDot, Select, YEARS } from '../components/UI.jsx';
-import { getDriverStandings, getConstructorStandings, getRaces } from '../services/api.js';
+import { getDriverStandings, getConstructorStandings, getRaces } from '../api/api.js';
 import { Trophy, Zap, Users, Flag } from 'lucide-react';
 
 export default function Dashboard() {

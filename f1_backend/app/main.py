@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+
+from sqlalchemy import text
 from app.config import settings
 from app.db.session import engine
 from app.routers import queries, analysis
@@ -10,7 +12,7 @@ from app.routers import queries, analysis
 async def lifespan(app: FastAPI):
     # Startup: verificar conexión a BD
     async with engine.begin() as conn:
-        await conn.run_sync(lambda c: c.execute(c.connection.connection.cursor().execute("SELECT 1")))
+        await conn.run_sync(lambda c: c.execute(text("SELECT 1")))
     print("✅ Conexión a PostgreSQL establecida")
     yield
     # Shutdown: cerrar pool de conexiones

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, EmptyState, PositionBadge, TeamDot, Select, YEARS } from '../components/UI.jsx';
-import { getRaces, getRaceResults, getRaceLapTimes, getRacePitStops } from '../services/api.js';
+import { getRaces, getRaceResults, getRaceLapTimes, getRacePitStops } from '../api/api.js';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const LAP_COLORS = ['#E8002D', '#27F4D2', '#FF8000', '#3671C6', '#FF87BC', '#FFD700'];

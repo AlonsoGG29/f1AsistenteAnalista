@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, PositionBadge, TeamDot, Select, YEARS } from '../components/UI.jsx';
-import { getDriverStandings, getConstructorStandings } from '../services/api.js';
+import { getDriverStandings, getConstructorStandings } from '../api/api.js';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const TEAM_COLORS = [
