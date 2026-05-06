@@ -251,15 +251,3 @@ export default function Chat() {
     </div>
   );
 }
-
-function Spinner({ size }) {
-  return (
-    <div style={{
-      width: size, height: size,
-      border: '2px solid rgba(255,255,255,0.2)',
-      borderTopColor: 'white',
-      borderRadius: '50%',
-      animation: 'spin 0.7s linear infinite',
-    }} />
-  );
-}
