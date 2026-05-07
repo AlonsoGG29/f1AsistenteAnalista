@@ -90,8 +90,8 @@ export default function Drivers() {
                 </div>
                 {drivers.map((d, i) => (
                   <div
-                    key={d.driver_id}
-                    onClick={() => loadDriver(d.driver_id)}
+                    key={d.driverId}
+                    onClick={() => loadDriver(d.driverId)}
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '1fr 120px 80px 32px',
@@ -100,13 +100,13 @@ export default function Drivers() {
                       padding: '9px 0',
                       borderBottom: '1px solid var(--f1-border)',
                       cursor: 'pointer',
-                      background: selectedDriver === d.driver_id ? 'rgba(232,0,45,0.05)' : 'transparent',
-                      borderLeft: selectedDriver === d.driver_id ? '3px solid var(--f1-red)' : '3px solid transparent',
+                      background: selectedDriver === d.driverId ? 'rgba(232,0,45,0.05)' : 'transparent',
+                      borderLeft: selectedDriver === d.driverId ? '3px solid var(--f1-red)' : '3px solid transparent',
                       paddingLeft: 6,
                       transition: 'all 0.1s',
                     }}
-                    onMouseEnter={e => { if (selectedDriver !== d.driver_id) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-                    onMouseLeave={e => { if (selectedDriver !== d.driver_id) e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { if (selectedDriver !== d.driverId) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+                    onMouseLeave={e => { if (selectedDriver !== d.driverId) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{
@@ -161,7 +161,7 @@ export default function Drivers() {
                         { label: 'Nac.', value: driverDetail.nationality },
                         { label: 'Nº', value: driverDetail.number ? `#${driverDetail.number}` : '—' },
                         { label: 'F. nacimiento', value: driverDetail.dob || '—' },
-                        { label: 'ID', value: driverDetail.driver_id },
+                        { label: 'ID', value: driverDetail.driverId },
                       ].map(({ label, value }) => (
                         <div key={label} className="stat-box">
                           <span className="stat-label">{label}</span>
@@ -183,7 +183,7 @@ export default function Drivers() {
                           <Tooltip
                             contentStyle={{ background: 'var(--f1-surface-2)', border: '1px solid var(--f1-border)', borderRadius: 4, fontSize: 11 }}
                           />
-                          <Bar dataKey="total_points" radius={[2, 2, 0, 0]}>
+                          <Bar dataKey="points" radius={[2, 2, 0, 0]}>
                             {seasonStats.slice(-15).map((_, i, arr) => (
                               <Cell key={i} fill={i === arr.length - 1 ? 'var(--f1-red)' : 'rgba(232,0,45,0.5)'} />
                             ))}
@@ -218,9 +218,9 @@ export default function Drivers() {
                             <TeamDot constructorName={s.constructor_name} size={8} />
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.constructor_name || '—'}</span>
                           </div>
-                          <span className="mono" style={{ fontWeight: 700 }}>{s.total_points}</span>
+                          <span className="mono" style={{ fontWeight: 700 }}>{s.points}</span>
                           <span className="mono" style={{ color: s.wins > 0 ? 'var(--gold)' : 'var(--f1-text-muted)' }}>{s.wins}</span>
-                          <span className="mono" style={{ color: s.best_position === 1 ? 'var(--gold)' : 'var(--f1-text-muted)' }}>{s.best_position || '—'}</span>
+                          <span className="mono" style={{ color: s.avg_finish <= 3 ? 'var(--gold)' : 'var(--f1-text-muted)' }}>{s.avg_finish ? s.avg_finish.toFixed(1) : '—'}</span>
                         </div>
                       ))}
                     </div>

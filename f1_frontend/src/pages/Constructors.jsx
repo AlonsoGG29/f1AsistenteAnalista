@@ -49,12 +49,12 @@ export default function Constructors() {
                   <span>Equipo</span><span>Nacionalidad</span><span></span>
                 </div>
                 {constructors.map(c => (
-                  <div key={c.constructor_id} onClick={() => loadDetail(c.constructor_id)} style={{
+                  <div key={c.constructorId} onClick={() => loadDetail(c.constructorId)} style={{
                     display: 'grid', gridTemplateColumns: '1fr 120px 32px', gap: 8, alignItems: 'center',
                     padding: '9px 0', borderBottom: '1px solid var(--f1-border)', cursor: 'pointer',
-                    borderLeft: selected === c.constructor_id ? '3px solid var(--f1-red)' : '3px solid transparent',
-                    paddingLeft: selected === c.constructor_id ? 8 : 2,
-                    background: selected === c.constructor_id ? 'rgba(232,0,45,0.05)' : 'transparent',
+                    borderLeft: selected === c.constructorId ? '3px solid var(--f1-red)' : '3px solid transparent',
+                    paddingLeft: selected === c.constructorId ? 8 : 2,
+                    background: selected === c.constructorId ? 'rgba(232,0,45,0.05)' : 'transparent',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <TeamDot constructorName={c.name} />
@@ -88,7 +88,7 @@ export default function Constructors() {
                   <div className="grid-2" style={{ gap: 10 }}>
                     {[
                       { label: 'Nacionalidad', value: detail.nationality },
-                      { label: 'ID', value: detail.constructor_id },
+                      { label: 'ID', value: detail.constructorId },
                     ].map(({ label, value }) => (
                       <div key={label} className="stat-box">
                         <span className="stat-label">{label}</span>
