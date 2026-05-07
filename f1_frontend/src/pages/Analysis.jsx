@@ -1,49 +1,180 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, EmptyState, Select, Input, YEARS } from '../components/UI.jsx';
-import { getDrivers, getHeadToHead, getDriverLapProgression, getRaces, getRaceLapTimes } from '../api/api.js';
+import { getDrivers, getHeadToHead, getDriverLapProgression } from '../api/api.js';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
-  ScatterChart, Scatter, CartesianGrid
+  CartesianGrid
 } from 'recharts';
 
-const DRIVER_COLORS = ['#E8002D', '#27F4D2', '#FF8000', '#3671C6', '#FFD700'];
+// ── Autocomplete driver picker ────────────────────────────────────────────────
+function DriverPicker({ label, value, onChange, drivers, accentColor = 'var(--f1-red)' }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
+  // Display name of selected driver
+  const selected = drivers.find(d => d.driverId === value);
+  const displayName = selected ? `${selected.forename} ${selected.surname}` : '';
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = query.length >= 1
+    ? drivers.filter(d =>
+        `${d.forename} ${d.surname}`.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 10)
+    : [];
+
+  const handleSelect = (driver) => {
+    onChange(driver.driverId);
+    setQuery('');
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    onChange(null);
+    setQuery('');
+  };
+
+  return (
+    <div style={{ flex: 1, minWidth: 200, position: 'relative' }} ref={ref}>
+      <div style={{
+        fontSize: 10, color: 'var(--f1-text-dim)', fontWeight: 700,
+        letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6,
+      }}>
+        {label}
+      </div>
+
+      {value ? (
+        // Show selected driver as a chip
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: 'var(--f1-surface-2)', border: `1px solid ${accentColor}44`,
+          borderRadius: 4, padding: '8px 12px', height: 38,
+        }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: 2,
+            background: accentColor, flexShrink: 0,
+          }} />
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{displayName}</span>
+          <button
+            onClick={handleClear}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--f1-text-dim)', fontSize: 16, lineHeight: 1, padding: 0,
+            }}
+          >×</button>
+        </div>
+      ) : (
+        // Search input
+        <div>
+          <input
+            className="input-f1"
+            value={query}
+            onChange={e => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            placeholder="Escribir nombre..."
+            style={{ width: '100%' }}
+          />
+          {open && filtered.length > 0 && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+              background: 'var(--f1-surface-2)', border: '1px solid var(--f1-border)',
+              borderRadius: 4, marginTop: 2, maxHeight: 220, overflowY: 'auto',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            }}>
+              {filtered.map(d => (
+                <div
+                  key={d.driverId}
+                  onMouseDown={() => handleSelect(d)}
+                  style={{
+                    padding: '8px 12px', cursor: 'pointer', fontSize: 13,
+                    borderBottom: '1px solid var(--f1-border)',
+                    transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ fontWeight: 600 }}>{d.forename} {d.surname}</span>
+                  {d.nationality && (
+                    <span style={{ fontSize: 11, color: 'var(--f1-text-dim)', marginLeft: 8 }}>
+                      {d.nationality}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Stat box for H2H ──────────────────────────────────────────────────────────
+function H2HStat({ label, valueA, valueB, higherIsBetter = true }) {
+  const numA = parseFloat(valueA);
+  const numB = parseFloat(valueB);
+  const aWins = higherIsBetter ? numA > numB : numA < numB;
+  const bWins = higherIsBetter ? numB > numA : numB < numA;
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: '1fr auto 1fr',
+      gap: 8, alignItems: 'center', padding: '8px 0',
+      borderBottom: '1px solid var(--f1-border)',
+    }}>
+      <span style={{
+        fontSize: 15, fontWeight: 700, color: aWins ? 'var(--f1-red)' : 'var(--f1-text-muted)',
+        textAlign: 'right',
+      }}>{valueA ?? '—'}</span>
+      <span style={{
+        fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+        color: 'var(--f1-text-dim)', textAlign: 'center', minWidth: 80,
+      }}>{label}</span>
+      <span style={{
+        fontSize: 15, fontWeight: 700, color: bWins ? '#27F4D2' : 'var(--f1-text-muted)',
+        textAlign: 'left',
+      }}>{valueB ?? '—'}</span>
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function Analysis() {
   const [tab, setTab] = useState('h2h');
   const [year, setYear] = useState(2024);
   const [drivers, setDrivers] = useState([]);
-  const [driverA, setDriverA] = useState('');
-  const [driverB, setDriverB] = useState('');
+  const [driverA, setDriverA] = useState(null);
+  const [driverB, setDriverB] = useState(null);
   const [h2hData, setH2hData] = useState(null);
   const [lapProg, setLapProg] = useState([]);
-  const [lapDriver, setLapDriver] = useState('');
+  const [lapDriver, setLapDriver] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getDrivers({ page_size: 200 }).then(d => setDrivers(d.items || []));
+    getDrivers({ page_size: 1000 }).then(d => setDrivers(d.items || []));
   }, []);
-
-  const driverOptions = drivers.map(d => ({
-    value: String(d.driver_id),
-    label: `${d.forename} ${d.surname}`,
-  }));
 
   const runH2H = () => {
     if (!driverA || !driverB) return;
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setH2hData(null);
     getHeadToHead(driverA, driverB, year || undefined)
       .then(setH2hData)
-      .catch(e => setError(e.message))
+      .catch(e => setError(e.response?.data?.detail || e.message))
       .finally(() => setLoading(false));
   };
 
   const runLapProg = () => {
     if (!lapDriver || !year) return;
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setLapProg([]);
     getDriverLapProgression(lapDriver, year)
-      .then(setLapProg)
-      .catch(e => setError(e.message))
+      .then(data => setLapProg(data || []))
+      .catch(e => setError(e.response?.data?.detail || e.message))
       .finally(() => setLoading(false));
   };
 
@@ -71,20 +202,26 @@ export default function Analysis() {
 
         {error && <ErrorBanner message={error} />}
 
-        {/* Head to Head */}
+        {/* ── Head to Head ───────────────────────────────────────────────── */}
         {tab === 'h2h' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <SectionCard title="Configurar comparativa">
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontSize: 10, color: 'var(--f1-text-dim)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Piloto A</div>
-                  <Select value={driverA} onChange={setDriverA} options={driverOptions} placeholder="Seleccionar..." />
-                </div>
+                <DriverPicker
+                  label="Piloto A"
+                  value={driverA}
+                  onChange={setDriverA}
+                  drivers={drivers}
+                  accentColor="var(--f1-red)"
+                />
                 <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--f1-red)', paddingBottom: 10 }}>VS</div>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontSize: 10, color: 'var(--f1-text-dim)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Piloto B</div>
-                  <Select value={driverB} onChange={setDriverB} options={driverOptions} placeholder="Seleccionar..." />
-                </div>
+                <DriverPicker
+                  label="Piloto B"
+                  value={driverB}
+                  onChange={setDriverB}
+                  drivers={drivers}
+                  accentColor="#27F4D2"
+                />
                 <div style={{ minWidth: 100 }}>
                   <div style={{ fontSize: 10, color: 'var(--f1-text-dim)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Temporada</div>
                   <Select value={year} onChange={v => setYear(Number(v))} options={[{ value: '', label: 'Todas' }, ...YEARS]} style={{ width: 100 }} />
@@ -97,108 +234,94 @@ export default function Analysis() {
 
             {loading && <LoadingPane />}
 
-            {h2hData && !loading && (
-              <div className="grid-2">
-                {/* Stats comparison */}
-                <SectionCard title="Estadísticas comparadas">
-                  <div style={{ display: 'flex', gap: 16 }}>
-                    {/* Driver A */}
-                    <div style={{ flex: 1, textAlign: 'center', padding: 16, background: 'rgba(232,0,45,0.05)', borderRadius: 4, border: '1px solid rgba(232,0,45,0.2)' }}>
-                      <div style={{ fontSize: 11, color: 'var(--f1-red)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>
-                        {h2hData.driver_a?.name || 'Piloto A'}
-                      </div>
-                      {[
-                        { label: 'Victorias', value: h2hData.driver_a?.wins },
-                        { label: 'Podios', value: h2hData.driver_a?.podiums },
-                        { label: 'Puntos', value: h2hData.driver_a?.total_points },
-                        { label: 'Pos. media', value: h2hData.driver_a?.avg_position?.toFixed(1) },
-                        { label: 'Mejor salida', value: h2hData.driver_a?.best_grid },
-                      ].map(({ label, value }) => (
-                        <div key={label} style={{ marginBottom: 10 }}>
-                          <div className="stat-label">{label}</div>
-                          <div className="stat-value red" style={{ fontSize: 18 }}>{value ?? '—'}</div>
-                        </div>
-                      ))}
+            {h2hData && !loading && (() => {
+              const nameA = h2hData.driver_a_name || 'Piloto A';
+              const nameB = h2hData.driver_b_name || 'Piloto B';
+              const total = h2hData.races_together || 0;
+              const winsA = h2hData.driver_a_wins ?? 0;
+              const winsB = h2hData.driver_b_wins ?? 0;
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Header chips */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center' }}>
+                    <div style={{
+                      padding: '12px 16px', background: 'rgba(232,0,45,0.08)',
+                      border: '1px solid rgba(232,0,45,0.25)', borderRadius: 4, textAlign: 'center',
+                    }}>
+                      <div style={{ fontSize: 11, color: 'var(--f1-red)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Piloto A</div>
+                      <div style={{ fontSize: 18, fontWeight: 900, marginTop: 4 }}>{nameA}</div>
                     </div>
-
-                    {/* Driver B */}
-                    <div style={{ flex: 1, textAlign: 'center', padding: 16, background: 'rgba(39,244,210,0.05)', borderRadius: 4, border: '1px solid rgba(39,244,210,0.2)' }}>
-                      <div style={{ fontSize: 11, color: '#27F4D2', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>
-                        {h2hData.driver_b?.name || 'Piloto B'}
-                      </div>
-                      {[
-                        { label: 'Victorias', value: h2hData.driver_b?.wins },
-                        { label: 'Podios', value: h2hData.driver_b?.podiums },
-                        { label: 'Puntos', value: h2hData.driver_b?.total_points },
-                        { label: 'Pos. media', value: h2hData.driver_b?.avg_position?.toFixed(1) },
-                        { label: 'Mejor salida', value: h2hData.driver_b?.best_grid },
-                      ].map(({ label, value }) => (
-                        <div key={label} style={{ marginBottom: 10 }}>
-                          <div className="stat-label">{label}</div>
-                          <div className="stat-value" style={{ fontSize: 18, color: '#27F4D2' }}>{value ?? '—'}</div>
-                        </div>
-                      ))}
+                    <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--f1-text-dim)' }}>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--f1-red)' }}>VS</div>
+                      <div style={{ marginTop: 4 }}>{total} carreras</div>
+                    </div>
+                    <div style={{
+                      padding: '12px 16px', background: 'rgba(39,244,210,0.08)',
+                      border: '1px solid rgba(39,244,210,0.25)', borderRadius: 4, textAlign: 'center',
+                    }}>
+                      <div style={{ fontSize: 11, color: '#27F4D2', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Piloto B</div>
+                      <div style={{ fontSize: 18, fontWeight: 900, marginTop: 4 }}>{nameB}</div>
                     </div>
                   </div>
-                  <div style={{ marginTop: 14, padding: '10px 14px', background: 'var(--f1-surface-2)', borderRadius: 4, fontSize: 12, color: 'var(--f1-text-muted)' }}>
-                    Carreras compartidas: <strong style={{ color: 'var(--f1-text)' }}>{h2hData.shared_races ?? '—'}</strong>
-                  </div>
-                </SectionCard>
 
-                {/* Head to head race wins */}
-                <SectionCard title="Duelos directos">
-                  {h2hData.race_wins_a !== undefined ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-                          <span style={{ color: 'var(--f1-red)', fontWeight: 700 }}>{h2hData.driver_a?.name}</span>
-                          <span style={{ color: 'var(--f1-text-muted)' }}>{h2hData.race_wins_a} victorias</span>
-                        </div>
-                        <div style={{ height: 8, background: 'var(--f1-surface-3)', borderRadius: 4, overflow: 'hidden' }}>
-                          <div style={{
-                            height: '100%',
-                            background: 'var(--f1-red)',
-                            width: `${h2hData.shared_races > 0 ? (h2hData.race_wins_a / h2hData.shared_races * 100) : 0}%`,
-                            transition: 'width 0.8s cubic-bezier(0.16,1,0.3,1)',
-                          }} />
+                  <div className="grid-2">
+                    {/* Stats table */}
+                    <SectionCard title="Estadísticas comparadas">
+                      <div style={{ fontSize: 11, display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, marginBottom: 8 }}>
+                        <span style={{ textAlign: 'right', color: 'var(--f1-red)', fontWeight: 700 }}>{nameA}</span>
+                        <span />
+                        <span style={{ color: '#27F4D2', fontWeight: 700 }}>{nameB}</span>
+                      </div>
+                      <H2HStat label="Victorias" valueA={winsA} valueB={winsB} />
+                      <H2HStat label="Pos. media" valueA={h2hData.driver_a_avg_position?.toFixed(2)} valueB={h2hData.driver_b_avg_position?.toFixed(2)} higherIsBetter={false} />
+                      <H2HStat label="Puntos totales" valueA={h2hData.driver_a_total_points} valueB={h2hData.driver_b_total_points} />
+                    </SectionCard>
+
+                    {/* Win bars */}
+                    <SectionCard title="Duelos directos">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingTop: 8 }}>
+                        {[
+                          { name: nameA, wins: winsA, color: 'var(--f1-red)' },
+                          { name: nameB, wins: winsB, color: '#27F4D2' },
+                        ].map(({ name, wins, color }) => (
+                          <div key={name}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 8 }}>
+                              <span style={{ color, fontWeight: 700 }}>{name}</span>
+                              <span style={{ color: 'var(--f1-text-muted)' }}>{wins} victorias</span>
+                            </div>
+                            <div style={{ height: 10, background: 'var(--f1-surface-3)', borderRadius: 5, overflow: 'hidden' }}>
+                              <div style={{
+                                height: '100%', background: color, borderRadius: 5,
+                                width: `${total > 0 ? (wins / total * 100) : 0}%`,
+                                transition: 'width 0.8s cubic-bezier(0.16,1,0.3,1)',
+                              }} />
+                            </div>
+                          </div>
+                        ))}
+                        <div style={{ fontSize: 11, color: 'var(--f1-text-dim)', textAlign: 'center' }}>
+                          {total} carreras disputadas juntos
                         </div>
                       </div>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-                          <span style={{ color: '#27F4D2', fontWeight: 700 }}>{h2hData.driver_b?.name}</span>
-                          <span style={{ color: 'var(--f1-text-muted)' }}>{h2hData.race_wins_b} victorias</span>
-                        </div>
-                        <div style={{ height: 8, background: 'var(--f1-surface-3)', borderRadius: 4, overflow: 'hidden' }}>
-                          <div style={{
-                            height: '100%',
-                            background: '#27F4D2',
-                            width: `${h2hData.shared_races > 0 ? (h2hData.race_wins_b / h2hData.shared_races * 100) : 0}%`,
-                            transition: 'width 0.8s cubic-bezier(0.16,1,0.3,1)',
-                          }} />
-                        </div>
-                      </div>
-                      <div style={{ marginTop: 8, fontSize: 11, color: 'var(--f1-text-dim)', textAlign: 'center' }}>
-                        {h2hData.shared_races} carreras disputadas juntos
-                      </div>
-                    </div>
-                  ) : (
-                    <EmptyState message="Sin datos de duelos directos" />
-                  )}
-                </SectionCard>
-              </div>
-            )}
+                    </SectionCard>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
-        {/* Lap progression */}
+        {/* ── Lap Progression ────────────────────────────────────────────── */}
         {tab === 'lapprog' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <SectionCard title="Progresión de tiempos de vuelta por temporada">
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontSize: 10, color: 'var(--f1-text-dim)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Piloto</div>
-                  <Select value={lapDriver} onChange={setLapDriver} options={driverOptions} placeholder="Seleccionar piloto..." />
-                </div>
+                <DriverPicker
+                  label="Piloto"
+                  value={lapDriver}
+                  onChange={setLapDriver}
+                  drivers={drivers}
+                  accentColor="var(--f1-red)"
+                />
                 <div>
                   <div style={{ fontSize: 10, color: 'var(--f1-text-dim)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Año</div>
                   <Select value={year} onChange={v => setYear(Number(v))} options={YEARS} style={{ width: 100 }} />
@@ -221,15 +344,19 @@ export default function Analysis() {
                       <YAxis tick={{ fill: 'var(--f1-text-muted)', fontSize: 10 }} />
                       <Tooltip
                         contentStyle={{ background: 'var(--f1-surface-2)', border: '1px solid var(--f1-border)', borderRadius: 4, fontSize: 11 }}
-                        formatter={(v) => [v ? `${(v / 1000).toFixed(3)}s` : '—', 'Tiempo medio']}
+                        formatter={(v) => [v ? `${(v / 1000).toFixed(3)}s` : '—', '']}
                       />
-                      <Line type="monotone" dataKey="avg_ms" stroke="var(--f1-red)" strokeWidth={2} dot={{ r: 3, fill: 'var(--f1-red)' }} connectNulls />
-                      <Line type="monotone" dataKey="best_ms" stroke="#27F4D2" strokeWidth={2} dot={{ r: 3, fill: '#27F4D2' }} strokeDasharray="4 2" connectNulls />
-                      <Legend formatter={(v) => v === 'avg_ms' ? 'Tiempo medio' : 'Mejor tiempo'} />
+                      <Line type="monotone" dataKey="avg_lap_ms" name="Tiempo medio" stroke="var(--f1-red)" strokeWidth={2} dot={{ r: 3, fill: 'var(--f1-red)' }} connectNulls />
+                      <Line type="monotone" dataKey="best_lap_ms" name="Mejor tiempo" stroke="#27F4D2" strokeWidth={2} dot={{ r: 3, fill: '#27F4D2' }} strokeDasharray="4 2" connectNulls />
+                      <Legend />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </SectionCard>
+            )}
+
+            {lapProg.length === 0 && !loading && lapDriver && (
+              <EmptyState message="Sin datos de tiempos de vuelta para este piloto y temporada" />
             )}
           </div>
         )}

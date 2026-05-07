@@ -18,7 +18,7 @@ async def list_drivers(
     nationality: Optional[str] = Query(None, description="Filtrar por nacionalidad"),
     search: Optional[str] = Query(None, description="Buscar por nombre"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(50, ge=1, le=2000),
     db: AsyncSession = Depends(get_db),
 ):
     skip = (page - 1) * page_size
