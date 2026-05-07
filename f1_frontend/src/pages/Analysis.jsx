@@ -273,8 +273,12 @@ export default function Analysis() {
                         <span style={{ color: '#27F4D2', fontWeight: 700 }}>{nameB}</span>
                       </div>
                       <H2HStat label="Victorias" valueA={winsA} valueB={winsB} />
+                      <H2HStat label="Podios" valueA={h2hData.driver_a_podiums ?? 0} valueB={h2hData.driver_b_podiums ?? 0} />
                       <H2HStat label="Pos. media" valueA={h2hData.driver_a_avg_position?.toFixed(2)} valueB={h2hData.driver_b_avg_position?.toFixed(2)} higherIsBetter={false} />
+                      <H2HStat label="Clasif. media" valueA={h2hData.driver_a_avg_grid?.toFixed(2) ?? '—'} valueB={h2hData.driver_b_avg_grid?.toFixed(2) ?? '—'} higherIsBetter={false} />
                       <H2HStat label="Puntos totales" valueA={h2hData.driver_a_total_points} valueB={h2hData.driver_b_total_points} />
+                      <H2HStat label="Ventaja pts" valueA={Math.max(0, (h2hData.driver_a_total_points - h2hData.driver_b_total_points)).toFixed(1)} valueB={Math.max(0, (h2hData.driver_b_total_points - h2hData.driver_a_total_points)).toFixed(1)} />
+                      <H2HStat label="Abandonos" valueA={h2hData.driver_a_dnfs ?? 0} valueB={h2hData.driver_b_dnfs ?? 0} higherIsBetter={false} />
                     </SectionCard>
 
                     {/* Win bars */}

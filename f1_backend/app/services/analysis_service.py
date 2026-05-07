@@ -283,9 +283,15 @@ async def get_head_to_head(
                 r.driverId,
                 COUNT(*)                            AS races,
                 SUM(CASE WHEN r.position = 1 THEN 1 ELSE 0 END) AS wins,
+                SUM(CASE WHEN r.position <= 3 THEN 1 ELSE 0 END) AS podiums,
                 AVG(r.positionOrder)                AS avg_position,
-                SUM(r.points)                       AS total_points
+                AVG(r.grid)                         AS avg_grid,
+                SUM(r.points)                       AS total_points,
+                SUM(CASE WHEN s.status NOT ILIKE '%Finished%'
+                              AND s.status NOT ILIKE '%Lap%'
+                         THEN 1 ELSE 0 END)         AS dnfs
             FROM results r
+            JOIN status s ON s.statusId = r.statusId
             WHERE r.raceId IN (SELECT raceId FROM shared_races)
               AND r.driverId IN (:aid, :bid)
             GROUP BY r.driverId
@@ -298,10 +304,16 @@ async def get_head_to_head(
             sa.races     AS races_together,
             sa.wins      AS driver_a_wins,
             sb.wins      AS driver_b_wins,
+            sa.podiums   AS driver_a_podiums,
+            sb.podiums   AS driver_b_podiums,
             sa.avg_position AS driver_a_avg_position,
             sb.avg_position AS driver_b_avg_position,
+            sa.avg_grid  AS driver_a_avg_grid,
+            sb.avg_grid  AS driver_b_avg_grid,
             sa.total_points AS driver_a_total_points,
-            sb.total_points AS driver_b_total_points
+            sb.total_points AS driver_b_total_points,
+            sa.dnfs      AS driver_a_dnfs,
+            sb.dnfs      AS driver_b_dnfs
         FROM stats sa
         JOIN stats sb        ON sb.driverId = :bid
         JOIN drivers da ON da.driverId = :aid

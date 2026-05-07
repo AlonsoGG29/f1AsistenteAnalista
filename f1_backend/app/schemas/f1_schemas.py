@@ -167,10 +167,16 @@ class HeadToHeadStats(BaseModel):
     races_together: int
     driver_a_wins: int
     driver_b_wins: int
+    driver_a_podiums: int = 0
+    driver_b_podiums: int = 0
     driver_a_avg_position: float
     driver_b_avg_position: float
+    driver_a_avg_grid: Optional[float] = None
+    driver_b_avg_grid: Optional[float] = None
     driver_a_total_points: float
     driver_b_total_points: float
+    driver_a_dnfs: int = 0
+    driver_b_dnfs: int = 0
 
 
 class PitStopStats(BaseModel):
