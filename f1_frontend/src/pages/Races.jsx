@@ -37,12 +37,12 @@ export default function Races() {
     }).finally(() => setDetailLoading(false));
   }, [selectedRace]);
 
-  const selectedRaceObj = races.find(r => r.race_id === selectedRace);
+  const selectedRaceObj = races.find(r => r.raceId === selectedRace);
 
   // Build lap times chart from results (using fastest lap info as proxy)
   const lapChart = results.slice(0, 6).map(r => ({
-    name: r.driver_code || r.driver_name?.split(' ').slice(-1)[0] || '—',
-    fastest: r.fastest_lap_speed ? parseFloat(r.fastest_lap_speed) : null,
+    name: r.driver_code || r.driver_surname || '—',
+    fastest: r.fastestLapSpeed ? parseFloat(r.fastestLapSpeed) : null,
     laps: r.laps,
     constructor: r.constructor_name,
   }));
@@ -61,15 +61,15 @@ export default function Races() {
               <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
                 {races.map(race => (
                   <div
-                    key={race.race_id}
-                    onClick={() => setSelectedRace(race.race_id)}
+                    key={race.raceId}
+                    onClick={() => setSelectedRace(race.raceId)}
                     style={{
                       padding: '10px 0',
                       borderBottom: '1px solid var(--f1-border)',
                       cursor: 'pointer',
-                      borderLeft: selectedRace === race.race_id ? '3px solid var(--f1-red)' : '3px solid transparent',
-                      paddingLeft: selectedRace === race.race_id ? 8 : 2,
-                      background: selectedRace === race.race_id ? 'rgba(232,0,45,0.05)' : 'transparent',
+                      borderLeft: selectedRace === race.raceId ? '3px solid var(--f1-red)' : '3px solid transparent',
+                      paddingLeft: selectedRace === race.raceId ? 8 : 2,
+                      background: selectedRace === race.raceId ? 'rgba(232,0,45,0.05)' : 'transparent',
                       transition: 'all 0.1s',
                     }}
                   >
@@ -116,7 +116,7 @@ export default function Races() {
                   {results[0] && (
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 10, color: 'var(--f1-text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Ganador</div>
-                      <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--gold)', marginTop: 2 }}>🏆 {results[0].driver_name}</div>
+                      <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--gold)', marginTop: 2 }}>🏆 {results[0].driver_forename} {results[0].driver_surname}</div>
                       <div style={{ fontSize: 12, color: 'var(--f1-text-muted)' }}>{results[0].constructor_name}</div>
                     </div>
                   )}
@@ -155,7 +155,7 @@ export default function Races() {
                             <span>Pos</span><span>Piloto</span><span>Equipo</span><span>Vueltas</span><span>Tiempo</span><span>Puntos</span>
                           </div>
                           {results.map((r, i) => (
-                            <div key={r.result_id || i} style={{
+                            <div key={i} style={{
                               display: 'grid',
                               gridTemplateColumns: '44px 1fr 120px 60px 80px 80px',
                               gap: 8, alignItems: 'center',
@@ -163,10 +163,10 @@ export default function Races() {
                               borderBottom: '1px solid var(--f1-border)',
                               animation: `fadeIn 0.2s ease ${i * 0.015}s both`,
                             }}>
-                              <PositionBadge pos={r.position || r.position_order} />
+                              <PositionBadge pos={r.position || r.positionOrder} />
                               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                                 <span style={{ fontSize: 10, fontFamily: 'Share Tech Mono', color: 'var(--f1-text-dim)', width: 26 }}>{r.driver_code || ''}</span>
-                                <span style={{ fontSize: 13, fontWeight: i < 3 ? 700 : 400 }}>{r.driver_name}</span>
+                                <span style={{ fontSize: 13, fontWeight: i < 3 ? 700 : 400 }}>{r.driver_forename} {r.driver_surname}</span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <TeamDot constructorName={r.constructor_name} size={8} />
