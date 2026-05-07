@@ -177,6 +177,10 @@ class HeadToHeadStats(BaseModel):
     driver_b_total_points: float
     driver_a_dnfs: int = 0
     driver_b_dnfs: int = 0
+    driver_a_teammate_name: Optional[str] = None
+    driver_a_teammate_diff: Optional[float] = None
+    driver_b_teammate_name: Optional[str] = None
+    driver_b_teammate_diff: Optional[float] = None
 
 
 class PitStopStats(BaseModel):

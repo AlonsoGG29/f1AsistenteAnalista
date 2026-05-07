@@ -278,6 +278,20 @@ export default function Analysis() {
                       <H2HStat label="Clasif. media" valueA={h2hData.driver_a_avg_grid?.toFixed(2) ?? '—'} valueB={h2hData.driver_b_avg_grid?.toFixed(2) ?? '—'} higherIsBetter={false} />
                       <H2HStat label="Puntos totales" valueA={h2hData.driver_a_total_points} valueB={h2hData.driver_b_total_points} />
                       <H2HStat label="Ventaja pts" valueA={Math.max(0, (h2hData.driver_a_total_points - h2hData.driver_b_total_points)).toFixed(1)} valueB={Math.max(0, (h2hData.driver_b_total_points - h2hData.driver_a_total_points)).toFixed(1)} />
+                      {h2hData.driver_a_teammate_name && (
+                        <H2HStat
+                          label={`vs ${h2hData.driver_a_teammate_name}`}
+                          valueA={`${h2hData.driver_a_teammate_diff > 0 ? '+' : ''}${h2hData.driver_a_teammate_diff?.toFixed(1)}`}
+                          valueB="—"
+                        />
+                      )}
+                      {h2hData.driver_b_teammate_name && (
+                        <H2HStat
+                          label={`vs ${h2hData.driver_b_teammate_name}`}
+                          valueA="—"
+                          valueB={`${h2hData.driver_b_teammate_diff > 0 ? '+' : ''}${h2hData.driver_b_teammate_diff?.toFixed(1)}`}
+                        />
+                      )}
                       <H2HStat label="Abandonos" valueA={h2hData.driver_a_dnfs ?? 0} valueB={h2hData.driver_b_dnfs ?? 0} higherIsBetter={false} />
                     </SectionCard>
 

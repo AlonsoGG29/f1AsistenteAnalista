@@ -325,7 +325,66 @@ async def get_head_to_head(
         params["year"] = year
     result = await db.execute(text(sql), params)
     row = result.mappings().one_or_none()
-    return HeadToHeadStats.model_validate(dict(row)) if row else None
+    if not row:
+        return None
+
+    data = dict(row)
+
+    # Enrich with teammate advantage if year is specified
+    if year:
+        for prefix, did in [("driver_a", driver_a_id), ("driver_b", driver_b_id)]:
+            tm = await _get_teammate_advantage(db, did, year)
+            if tm:
+                data[f"{prefix}_teammate_name"] = tm["teammate_name"]
+                data[f"{prefix}_teammate_diff"] = tm["points_diff"]
+
+    return HeadToHeadStats.model_validate(data)
+
+
+async def _get_teammate_advantage(
+    db: AsyncSession, driver_id: int, year: int
+) -> Optional[dict]:
+    """
+    Finds the driver's main teammate (same constructor, most shared races)
+    in a given season and returns the points difference.
+    """
+    sql = """
+        WITH driver_team AS (
+            SELECT r.constructorId, COUNT(*) AS cnt
+            FROM results r
+            JOIN races ra ON ra.raceId = r.raceId
+            WHERE r.driverId = :did AND ra.year = :year
+            GROUP BY r.constructorId
+            ORDER BY cnt DESC
+            LIMIT 1
+        ),
+        teammate AS (
+            SELECT r.driverId, d.forename || ' ' || d.surname AS name,
+                   SUM(r.points) AS pts
+            FROM results r
+            JOIN races ra ON ra.raceId = r.raceId
+            JOIN drivers d ON d.driverId = r.driverId
+            WHERE r.constructorId = (SELECT constructorId FROM driver_team)
+              AND ra.year = :year
+              AND r.driverId != :did
+            GROUP BY r.driverId, d.forename, d.surname
+            ORDER BY pts DESC
+            LIMIT 1
+        ),
+        driver_pts AS (
+            SELECT SUM(r.points) AS pts
+            FROM results r
+            JOIN races ra ON ra.raceId = r.raceId
+            WHERE r.driverId = :did AND ra.year = :year
+        )
+        SELECT t.name AS teammate_name, dp.pts - t.pts AS points_diff
+        FROM teammate t, driver_pts dp
+    """
+    result = await db.execute(text(sql), {"did": driver_id, "year": year})
+    row = result.mappings().one_or_none()
+    if row and row["teammate_name"]:
+        return {"teammate_name": row["teammate_name"], "points_diff": row["points_diff"]}
+    return None
 
 
 # ── Estadísticas de circuito ──────────────────────────────────────────────────
