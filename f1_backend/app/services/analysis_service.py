@@ -135,12 +135,12 @@ async def get_driver_pit_stop_stats(
     year: Optional[int] = None,
 ) -> List[PitStopStats]:
     """Estadísticas agregadas de pit stops por carrera para un piloto."""
-    stmt = text("""
+    year_filter = "AND ra.year = :year" if year else ""
+    sql = f"""
         SELECT
             ra.raceId   AS race_id,
             ra.name     AS race_name,
             ra.year,
-            :did        AS driver_id,
             d.forename || ' ' || d.surname  AS driver_name,
             c.name                          AS constructor_name,
             COUNT(ps.stop)                  AS total_stops,
@@ -156,12 +156,20 @@ async def get_driver_pit_stop_stats(
                             AND r.driverId     = ps.driverId
         JOIN constructors c ON c.constructorId = r.constructorId
         WHERE ps.driverId = :did
-          AND (:year IS NULL OR ra.year = :year)
+          {year_filter}
         GROUP BY ra.raceId, ra.name, ra.year, d.forename, d.surname, c.name
         ORDER BY ra.year, ra.raceId
-    """)
-    result = await db.execute(stmt, {"did": driver_id, "year": year})
-    return [PitStopStats.model_validate(dict(row)) for row in result.mappings()]
+    """
+    params = {"did": driver_id}
+    if year:
+        params["year"] = year
+    result = await db.execute(text(sql), params)
+    out = []
+    for row in result.mappings():
+        d = dict(row)
+        d["driver_id"] = driver_id
+        out.append(PitStopStats.model_validate(d))
+    return out
 
 
 # ── Estadísticas de temporada ─────────────────────────────────────────────────
@@ -171,10 +179,10 @@ async def get_driver_season_stats(
     driver_id: int,
     year: Optional[int] = None,
 ) -> List[DriverSeasonStats]:
-    stmt = text("""
+    year_filter = "AND ra.year = :year" if year else ""
+    sql = f"""
         SELECT
             ra.year,
-            :did                                                        AS driver_id,
             d.forename || ' ' || d.surname                             AS driver_name,
             c.name                                                      AS constructor_name,
             COUNT(r.resultId)                                           AS races,
@@ -193,12 +201,20 @@ async def get_driver_season_stats(
         JOIN constructors c  ON c.constructorId  = r.constructorId
         JOIN status       s  ON s.statusId       = r.statusId
         WHERE r.driverId = :did
-          AND (:year IS NULL OR ra.year = :year)
+          {year_filter}
         GROUP BY ra.year, d.forename, d.surname, c.name
         ORDER BY ra.year DESC
-    """)
-    result = await db.execute(stmt, {"did": driver_id, "year": year})
-    return [DriverSeasonStats.model_validate(dict(row)) for row in result.mappings()]
+    """
+    params = {"did": driver_id}
+    if year:
+        params["year"] = year
+    result = await db.execute(text(sql), params)
+    out = []
+    for row in result.mappings():
+        d = dict(row)
+        d["driver_id"] = driver_id
+        out.append(DriverSeasonStats.model_validate(d))
+    return out
 
 
 async def get_constructor_season_stats(
@@ -206,10 +222,10 @@ async def get_constructor_season_stats(
     constructor_id: int,
     year: Optional[int] = None,
 ) -> List[ConstructorSeasonStats]:
-    stmt = text("""
+    year_filter = "AND ra.year = :year" if year else ""
+    sql = f"""
         SELECT
             ra.year,
-            :cid                                                    AS constructor_id,
             c.name                                                  AS constructor_name,
             COUNT(DISTINCT ra.raceId)                               AS races,
             SUM(CASE WHEN r.position = 1 THEN 1 ELSE 0 END)        AS wins,
@@ -225,15 +241,18 @@ async def get_constructor_season_stats(
         JOIN drivers      d  ON d.driverId      = r.driverId
         JOIN status       s  ON s.statusId      = r.statusId
         WHERE r.constructorId = :cid
-          AND (:year IS NULL OR ra.year = :year)
+          {year_filter}
         GROUP BY ra.year, c.name
         ORDER BY ra.year DESC
-    """)
-    result = await db.execute(stmt, {"cid": constructor_id, "year": year})
-    rows = result.mappings().all()
+    """
+    params = {"cid": constructor_id}
+    if year:
+        params["year"] = year
+    result = await db.execute(text(sql), params)
     out = []
-    for row in rows:
+    for row in result.mappings():
         d = dict(row)
+        d["constructor_id"] = constructor_id
         d["drivers"] = [x for x in (d.get("drivers") or []) if x]
         out.append(ConstructorSeasonStats.model_validate(d))
     return out
@@ -250,13 +269,14 @@ async def get_head_to_head(
     """
     Comparativa directa entre dos pilotos en las carreras que coincidieron.
     """
-    stmt = text("""
+    year_filter = "AND ra.year = :year" if year else ""
+    sql = f"""
         WITH shared_races AS (
             SELECT ra.raceId
             FROM races ra
             JOIN results ra_a ON ra_a.raceId = ra.raceId AND ra_a.driverId = :aid
             JOIN results ra_b ON ra_b.raceId = ra.raceId AND ra_b.driverId = :bid
-            WHERE (:year IS NULL OR ra.year = :year)
+            WHERE 1=1 {year_filter}
         ),
         stats AS (
             SELECT
@@ -287,8 +307,11 @@ async def get_head_to_head(
         JOIN drivers da ON da.driverId = :aid
         JOIN drivers db ON db.driverId = :bid
         WHERE sa.driverId = :aid
-    """)
-    result = await db.execute(stmt, {"aid": driver_a_id, "bid": driver_b_id, "year": year})
+    """
+    params = {"aid": driver_a_id, "bid": driver_b_id}
+    if year:
+        params["year"] = year
+    result = await db.execute(text(sql), params)
     row = result.mappings().one_or_none()
     return HeadToHeadStats.model_validate(dict(row)) if row else None
 
