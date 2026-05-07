@@ -274,10 +274,10 @@ export default function Analysis() {
                       </div>
                       <H2HStat label="Victorias" valueA={winsA} valueB={winsB} />
                       <H2HStat label="Podios" valueA={h2hData.driver_a_podiums ?? 0} valueB={h2hData.driver_b_podiums ?? 0} />
+                      <H2HStat label="Poles" valueA={h2hData.driver_a_poles ?? 0} valueB={h2hData.driver_b_poles ?? 0} />
                       <H2HStat label="Pos. media" valueA={h2hData.driver_a_avg_position?.toFixed(2)} valueB={h2hData.driver_b_avg_position?.toFixed(2)} higherIsBetter={false} />
                       <H2HStat label="Clasif. media" valueA={h2hData.driver_a_avg_grid?.toFixed(2) ?? '—'} valueB={h2hData.driver_b_avg_grid?.toFixed(2) ?? '—'} higherIsBetter={false} />
                       <H2HStat label="Puntos totales" valueA={h2hData.driver_a_total_points} valueB={h2hData.driver_b_total_points} />
-                      <H2HStat label="Ventaja pts" valueA={Math.max(0, (h2hData.driver_a_total_points - h2hData.driver_b_total_points)).toFixed(1)} valueB={Math.max(0, (h2hData.driver_b_total_points - h2hData.driver_a_total_points)).toFixed(1)} />
                       {(h2hData.driver_a_teammate_name || h2hData.driver_b_teammate_name) && (
                         <H2HStat 
                           label="Dif. vs Compañero" 

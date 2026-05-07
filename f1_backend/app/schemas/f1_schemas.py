@@ -169,6 +169,8 @@ class HeadToHeadStats(BaseModel):
     driver_b_wins: int
     driver_a_podiums: int = 0
     driver_b_podiums: int = 0
+    driver_a_poles: int = 0
+    driver_b_poles: int = 0
     driver_a_avg_position: float
     driver_b_avg_position: float
     driver_a_avg_grid: Optional[float] = None
