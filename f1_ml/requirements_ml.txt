@@ -1,19 +1,21 @@
-# ── ML ────────────────────────────────────────────────────────────────────────
-scikit-learn==1.5.2
-xgboost==2.1.1          # opcional pero recomendado; si falla instalar, el código usa sklearn
-numpy==1.26.4
-pandas==2.2.3
-joblib==1.4.2
+# ── CORE DATA & ML ────────────────────────────────────────────────────────────
+# Versiones mínimas para compatibilidad con Python 3.13
+numpy>=2.1.0
+pandas>=2.2.3
+polars>=1.12.0
+scikit-learn>=1.5.2
+xgboost>=2.1.1
+joblib>=1.4.2
 
-# ── Notebook ──────────────────────────────────────────────────────────────────
-jupyter==1.1.1
-matplotlib==3.9.2
+# ── F1 DATA SOURCE ───────────────────────────────────────────────────────────
+# Librería principal para telemetría y datos de sesión
+fastf1>=3.4.0
 
-# ── (ya en requirements.txt del backend, repetidos por claridad) ──────────────
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-sqlalchemy[asyncio]==2.0.36
-asyncpg==0.30.0
-pydantic==2.9.2
-pydantic-settings==2.5.2
-python-dotenv==1.0.1
+# ── DATABASE & UTILS ─────────────────────────────────────────────────────────
+# Mantener para conexión rápida a PostgreSQL si decides cruzar datos
+psycopg2-binary>=2.9.9
+connectorx>=0.4.5
+
+# ── VISUALIZACIÓN (Opcional pero útil para telemetría) ───────────────────────
+matplotlib>=3.9.0
+seaborn>=0.13.0
