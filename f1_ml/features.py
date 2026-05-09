@@ -11,7 +11,10 @@ class F1FeatureEngine:
             .with_columns([
                 pl.col("LapTime").dt.total_milliseconds().cast(pl.Float64) / 1000,
                 pl.col("TyreLife").cast(pl.Float32),
-                pl.col("Compound").cast(pl.Categorical)
+                pl.col("Compound").cast(pl.Categorical),
+                pl.col("TrackType").cast(pl.Categorical),
+                pl.col("TrackTemp").cast(pl.Float32),
+                pl.col("Rainfall").cast(pl.Int8)
             ])
             # 2. Ingeniería de "Rendimiento" (Telemetría resumida)
             .with_columns([

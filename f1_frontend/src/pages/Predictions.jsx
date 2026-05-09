@@ -93,9 +93,31 @@ export default function Predictions() {
   const [errors, setErrors] = useState({});
 
   // Individual forms for each card
-  const [pitForm, setPitForm] = useState({ Year: 2023, TyreLife: 15, LapTime: 92.5, LapDelta: 0.3, RollingLapTime: 92.2, TrackTemp: 35, Rainfall: 0 });
-  const [tyreForm, setTyreForm] = useState({ Year: 2023, TyreLife: 20, LapTime: 93.1, LapDelta: 0.5, RollingLapTime: 92.8, TrackTemp: 32, Rainfall: 0 });
-  const [scForm, setScForm] = useState({ Year: 2023, TyreLife: 10, LapTime: 91.8, LapDelta: 0.1, RollingLapTime: 91.7, TrackTemp: 30, Rainfall: 0 });
+  const [pitForm, setPitForm] = useState({ 
+    Year: 2023, 
+    TyreLife: 15, 
+    LapTime: '1:32.500', 
+    LapDelta: 0.3, 
+    RollingLapTime: '1:32.200', 
+    TrackTemp: 35, 
+    Rainfall: 0,
+    Compound: 'MEDIUM'
+  });
+  
+  const [tyreForm, setTyreForm] = useState({ 
+    Year: 2023, 
+    TyreLife: 20, 
+    TrackTemp: 32, 
+    Rainfall: 0,
+    Compound: 'SOFT'
+  });
+  
+  const [scForm, setScForm] = useState({ 
+    Year: 2023, 
+    TrackType: 'Street', 
+    TrackTemp: 30, 
+    Rainfall: 0 
+  });
 
   useEffect(() => {
     getMLStatus().then(setModelStatus).catch(() => {});
@@ -114,12 +136,13 @@ export default function Predictions() {
     }
   };
 
-  const InlineField = ({ label, value, onChange, type = 'number', step = 'any' }) => (
+  const InlineField = ({ label, value, onChange, type = 'number', step = 'any', placeholder }) => (
     <div style={{ marginBottom: 10 }}>
       <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--f1-text-dim)', display: 'block', marginBottom: 4 }}>{label}</label>
       <input
         type={type}
         step={step}
+        placeholder={placeholder}
         value={value}
         onChange={e => onChange(type === 'number' ? parseFloat(e.target.value) : e.target.value)}
         className="input-f1"
@@ -128,9 +151,27 @@ export default function Predictions() {
     </div>
   );
 
+  const CompoundSelect = ({ value, onChange }) => (
+    <div style={{ marginBottom: 10 }}>
+      <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--f1-text-dim)', display: 'block', marginBottom: 4 }}>Compuesto</label>
+      <Select 
+        value={value} 
+        onChange={onChange}
+        options={[
+          {value: 'SOFT', label: 'SOFT (Rojo)'},
+          {value: 'MEDIUM', label: 'MEDIUM (Amarillo)'},
+          {value: 'HARD', label: 'HARD (Blanco)'},
+          {value: 'INTERMEDIATE', label: 'INTERMEDIATE (Verde)'},
+          {value: 'WET', label: 'WET (Azul)'},
+        ]}
+        style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+      />
+    </div>
+  );
+
   return (
     <div style={{ flex: 1, overflow: 'auto' }}>
-      <PageHeader title="Predicciones IA" subtitle="Modelos basados en FastF1, Polars y XGBoost">
+      <PageHeader title="Predicciones IA" subtitle="Análisis avanzado con FastF1 y XGBoost">
         {modelStatus && (
           <div style={{ display: 'flex', gap: 8 }}>
             {Object.entries(modelStatus).map(([key, val]) => (
@@ -147,12 +188,13 @@ export default function Predictions() {
         <div className="grid-3" style={{ alignItems: 'start' }}>
           {/* Parada en Boxes */}
           <PredictionCard icon={Timer} title="Probabilidad de Parada" color="var(--f1-red)">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
               <InlineField label="Vueltas Neum." value={pitForm.TyreLife} onChange={v => setPitForm(f => ({ ...f, TyreLife: v }))} />
               <InlineField label="Delta (s)" value={pitForm.LapDelta} onChange={v => setPitForm(f => ({ ...f, LapDelta: v }))} />
-              <InlineField label="Tiempo Vuelta" value={pitForm.LapTime} onChange={v => setPitForm(f => ({ ...f, LapTime: v }))} />
+              <InlineField label="Tiempo Vuelta" type="text" placeholder="min:ss.ms" value={pitForm.LapTime} onChange={v => setPitForm(f => ({ ...f, LapTime: v }))} />
               <InlineField label="Temp. Pista" value={pitForm.TrackTemp} onChange={v => setPitForm(f => ({ ...f, TrackTemp: v }))} />
             </div>
+            <CompoundSelect value={pitForm.Compound} onChange={v => setPitForm(f => ({ ...f, Compound: v }))} />
             <button className="btn-primary" style={{ width: '100%' }}
               onClick={() => run('pit', predictPitStop, pitForm)}
               disabled={loading.pit}>
@@ -164,7 +206,7 @@ export default function Predictions() {
 
           {/* Estrategia Neumaticos */}
           <PredictionCard icon={Disc} title="Recomendación de Neumáticos" color="#27F4D2">
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
               <InlineField label="Vueltas Rest." value={tyreForm.TyreLife} onChange={v => setTyreForm(f => ({ ...f, TyreLife: v }))} />
               <InlineField label="Temp. Pista" value={tyreForm.TrackTemp} onChange={v => setTyreForm(f => ({ ...f, TrackTemp: v }))} />
               <div style={{ gridColumn: 'span 2' }}>
@@ -172,7 +214,7 @@ export default function Predictions() {
                 <Select 
                   value={tyreForm.Rainfall} 
                   onChange={v => setTyreForm(f => ({ ...f, Rainfall: parseInt(v) }))}
-                  options={[{value: 0, label: 'No'}, {value: 1, label: 'Sí'}]}
+                  options={[{value: 0, label: 'Seco'}, {value: 1, label: 'Lluvia'}]}
                   style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
                 />
               </div>
@@ -188,10 +230,18 @@ export default function Predictions() {
 
           {/* Safety Car */}
           <PredictionCard icon={Shield} title="Riesgo de Safety Car" color="#FF8000">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-              <InlineField label="Año" value={scForm.Year} onChange={v => setScForm(f => ({ ...f, Year: v }))} />
-              <InlineField label="Temp. Pista" value={scForm.TrackTemp} onChange={v => setScForm(f => ({ ...f, TrackTemp: v }))} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
               <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--f1-text-dim)', display: 'block', marginBottom: 4 }}>Tipo de Circuito</label>
+                <Select 
+                  value={scForm.TrackType} 
+                  onChange={v => setScForm(f => ({ ...f, TrackType: v }))}
+                  options={[{value: 'Permanent', label: 'Permanente (Spa, Monza...)'}, {value: 'Street', label: 'Urbano (Mónaco, Singapur...)'}]}
+                  style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                />
+              </div>
+              <InlineField label="Temp. Pista" value={scForm.TrackTemp} onChange={v => setScForm(f => ({ ...f, TrackTemp: v }))} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--f1-text-dim)', display: 'block', marginBottom: 4 }}>Lluvia</label>
                 <Select 
                   value={scForm.Rainfall} 
@@ -220,10 +270,9 @@ export default function Predictions() {
                 <h3 style={{ margin: 0, fontSize: 16 }}>Estado del Monoplaza</h3>
               </div>
               <p style={{ fontSize: 13, color: 'var(--f1-text-muted)', lineHeight: 1.5 }}>
-                El sistema de IA monitoriza constantemente los deltas de tiempo y la degradación térmica. 
-                Los modelos actuales han sido entrenados con datos históricos de la temporada 2023, permitiendo identificar patrones de desgaste 
-                y probabilidad de incidentes en tiempo real. 
-                {pitForm.LapDelta > 0.4 ? ' Se observa una pérdida de ritmo significativa.' : ' El ritmo parece estable bajo las condiciones actuales.'}
+                El motor de inferencia ha sido actualizado con soporte para compuestos de lluvia (Intermediate/Wet) y distinción de circuitos urbanos. 
+                El tiempo de vuelta ingresado como <strong>{pitForm.LapTime}</strong> es procesado internamente para evaluar el ritmo relativo. 
+                Los circuitos urbanos como <strong>{scForm.TrackType === 'Street' ? 'Mónaco o Singapur' : 'Circuitos permanentes'}</strong> tienen un multiplicador de riesgo de incidentes del 50% adicional.
               </p>
             </div>
             <div style={{ width: 200, padding: 16, background: 'var(--f1-surface-2)', borderRadius: 4, textAlign: 'center' }}>

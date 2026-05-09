@@ -17,6 +17,10 @@ def main():
         import pandas as pd
         print("Cargando datos locales...")
         data_raw = pd.read_csv('dataset_f1_raw.csv')
+        # Convertir tiempos a timedelta
+        for col in ['LapTime', 'PitInTime', 'Time']:
+            if col in data_raw.columns:
+                data_raw[col] = pd.to_timedelta(data_raw[col])
 
     print("Procesando Features con Polars...")
     engine = F1FeatureEngine(data_raw)
