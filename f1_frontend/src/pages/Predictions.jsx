@@ -4,7 +4,7 @@ import {
   predictSafetyCar, predictPitStop, predictTyreStrategy, getMLStatus 
 } from '../api/api.js';
 import { 
-  Shield, Timer, Disc, Activity, AlertTriangle, Trophy 
+  Shield, Timer, Disc, Activity 
 } from 'lucide-react';
 
 function PredictionCard({ icon: Icon, title, color, children }) {
@@ -30,6 +30,14 @@ function PredictionCard({ icon: Icon, title, color, children }) {
 
 function ResultBox({ result, color, type = 'prob' }) {
   if (!result) return null;
+  
+  if (result.error) {
+    return (
+      <div style={{ marginTop: 16 }}>
+        <ErrorBanner message={result.error} />
+      </div>
+    );
+  }
 
   if (type === 'list') {
     return (
@@ -50,7 +58,9 @@ function ResultBox({ result, color, type = 'prob' }) {
     );
   }
 
-  const pct = Math.round(result.probability * 100);
+  const probValue = typeof result.probability === 'number' ? result.probability : 0;
+  const pct = Math.round(probValue * 100);
+
   return (
     <div style={{ marginTop: 16, padding: 16, background: 'var(--f1-surface-2)', borderRadius: 4, border: '1px solid var(--f1-border)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -59,7 +69,7 @@ function ResultBox({ result, color, type = 'prob' }) {
           {result.label ? 'SÍ' : 'NO'}
         </span>
       </div>
-      <ProbabilityBar value={result.probability} label="Probabilidad" color={color} />
+      <ProbabilityBar value={probValue} label="Probabilidad" color={color} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
         <div className="stat-box">
           <span className="stat-label">Prob.</span>
@@ -68,7 +78,7 @@ function ResultBox({ result, color, type = 'prob' }) {
         <div className="stat-box">
           <span className="stat-label">Confianza</span>
           <span className="stat-value" style={{ fontSize: 14, color: result.confidence === 'alta' ? '#27F4D2' : result.confidence === 'media' ? '#FF8000' : 'var(--f1-text-muted)' }}>
-            {result.confidence?.toUpperCase()}
+            {result.confidence?.toUpperCase() || '—'}
           </span>
         </div>
       </div>
@@ -82,27 +92,20 @@ export default function Predictions() {
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
 
-  // Unified Form for ML Features
-  const [form, setForm] = useState({
-    Year: 2023,
-    TyreLife: 12,
-    LapTime: 92.5,
-    LapDelta: 0.2,
-    RollingLapTime: 92.3,
-    TrackTemp: 34.5,
-    Rainfall: 0,
-    Compound: 'MEDIUM'
-  });
+  // Individual forms for each card
+  const [pitForm, setPitForm] = useState({ Year: 2023, TyreLife: 15, LapTime: 92.5, LapDelta: 0.3, RollingLapTime: 92.2, TrackTemp: 35, Rainfall: 0 });
+  const [tyreForm, setTyreForm] = useState({ Year: 2023, TyreLife: 20, LapTime: 93.1, LapDelta: 0.5, RollingLapTime: 92.8, TrackTemp: 32, Rainfall: 0 });
+  const [scForm, setScForm] = useState({ Year: 2023, TyreLife: 10, LapTime: 91.8, LapDelta: 0.1, RollingLapTime: 91.7, TrackTemp: 30, Rainfall: 0 });
 
   useEffect(() => {
     getMLStatus().then(setModelStatus).catch(() => {});
   }, []);
 
-  const run = async (key, fn) => {
+  const run = async (key, fn, payload) => {
     setLoading(l => ({ ...l, [key]: true }));
     setErrors(e => ({ ...e, [key]: null }));
     try {
-      const res = await fn(form);
+      const res = await fn(payload);
       setResults(r => ({ ...r, [key]: res }));
     } catch (e) {
       setErrors(er => ({ ...er, [key]: e.response?.data?.detail || e.message }));
@@ -111,16 +114,16 @@ export default function Predictions() {
     }
   };
 
-  const Field = ({ label, name, step = 'any', type = 'number' }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--f1-text-dim)' }}>{label}</label>
+  const InlineField = ({ label, value, onChange, type = 'number', step = 'any' }) => (
+    <div style={{ marginBottom: 10 }}>
+      <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--f1-text-dim)', display: 'block', marginBottom: 4 }}>{label}</label>
       <input
         type={type}
         step={step}
-        value={form[name]}
-        onChange={e => setForm(f => ({ ...f, [name]: type === 'number' ? parseFloat(e.target.value) : e.target.value }))}
+        value={value}
+        onChange={e => onChange(type === 'number' ? parseFloat(e.target.value) : e.target.value)}
         className="input-f1"
-        style={{ padding: '6px 10px', fontSize: 12 }}
+        style={{ padding: '4px 8px', fontSize: 11, width: '100%' }}
       />
     </div>
   );
@@ -141,44 +144,17 @@ export default function Predictions() {
 
       <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         
-        {/* Parametros de Entrada */}
-        <SectionCard title="Condiciones Actuales (Input de Telemetría)">
-          <div className="grid-4" style={{ gap: 16 }}>
-            <Field label="Año" name="Year" />
-            <Field label="Vueltas Neumático" name="TyreLife" />
-            <Field label="Tiempo Vuelta (s)" name="LapTime" />
-            <Field label="Delta Vuelta (s)" name="LapDelta" />
-            <Field label="Media Móvil 3v (s)" name="RollingLapTime" />
-            <Field label="Temp. Pista (°C)" name="TrackTemp" />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--f1-text-dim)' }}>Lluvia</label>
-              <Select 
-                value={form.Rainfall} 
-                onChange={v => setForm(f => ({ ...f, Rainfall: parseInt(v) }))}
-                options={[{value: 0, label: 'No'}, {value: 1, label: 'Sí'}]}
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--f1-text-dim)' }}>Compuesto Actual</label>
-              <Select 
-                value={form.Compound} 
-                onChange={v => setForm(f => ({ ...f, Compound: v }))}
-                options={[
-                  {value: 'SOFT', label: 'Blando (S)'},
-                  {value: 'MEDIUM', label: 'Medio (M)'},
-                  {value: 'HARD', label: 'Duro (H)'}
-                ]}
-              />
-            </div>
-          </div>
-        </SectionCard>
-
-        <div className="grid-3" style={{ alignItems: 'stretch' }}>
+        <div className="grid-3" style={{ alignItems: 'start' }}>
           {/* Parada en Boxes */}
           <PredictionCard icon={Timer} title="Probabilidad de Parada" color="var(--f1-red)">
-            <p style={{ fontSize: 12, color: 'var(--f1-text-muted)', marginBottom: 16 }}>Predice si el piloto entrará en boxes en la siguiente vuelta basado en degradación.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+              <InlineField label="Vueltas Neum." value={pitForm.TyreLife} onChange={v => setPitForm(f => ({ ...f, TyreLife: v }))} />
+              <InlineField label="Delta (s)" value={pitForm.LapDelta} onChange={v => setPitForm(f => ({ ...f, LapDelta: v }))} />
+              <InlineField label="Tiempo Vuelta" value={pitForm.LapTime} onChange={v => setPitForm(f => ({ ...f, LapTime: v }))} />
+              <InlineField label="Temp. Pista" value={pitForm.TrackTemp} onChange={v => setPitForm(f => ({ ...f, TrackTemp: v }))} />
+            </div>
             <button className="btn-primary" style={{ width: '100%' }}
-              onClick={() => run('pit', predictPitStop)}
+              onClick={() => run('pit', predictPitStop, pitForm)}
               disabled={loading.pit}>
               {loading.pit ? 'Analizando...' : 'Calcular Probabilidad'}
             </button>
@@ -188,9 +164,21 @@ export default function Predictions() {
 
           {/* Estrategia Neumaticos */}
           <PredictionCard icon={Disc} title="Recomendación de Neumáticos" color="#27F4D2">
-            <p style={{ fontSize: 12, color: 'var(--f1-text-muted)', marginBottom: 16 }}>Sugerencia del mejor compuesto para el siguiente stint según condiciones.</p>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+              <InlineField label="Vueltas Rest." value={tyreForm.TyreLife} onChange={v => setTyreForm(f => ({ ...f, TyreLife: v }))} />
+              <InlineField label="Temp. Pista" value={tyreForm.TrackTemp} onChange={v => setTyreForm(f => ({ ...f, TrackTemp: v }))} />
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--f1-text-dim)', display: 'block', marginBottom: 4 }}>Lluvia</label>
+                <Select 
+                  value={tyreForm.Rainfall} 
+                  onChange={v => setTyreForm(f => ({ ...f, Rainfall: parseInt(v) }))}
+                  options={[{value: 0, label: 'No'}, {value: 1, label: 'Sí'}]}
+                  style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                />
+              </div>
+            </div>
             <button className="btn-primary" style={{ width: '100%', background: '#27F4D2', color: '#000' }}
-              onClick={() => run('tyre', predictTyreStrategy)}
+              onClick={() => run('tyre', predictTyreStrategy, tyreForm)}
               disabled={loading.tyre}>
               {loading.tyre ? 'Calculando...' : 'Ver Recomendación'}
             </button>
@@ -200,9 +188,21 @@ export default function Predictions() {
 
           {/* Safety Car */}
           <PredictionCard icon={Shield} title="Riesgo de Safety Car" color="#FF8000">
-            <p style={{ fontSize: 12, color: 'var(--f1-text-muted)', marginBottom: 16 }}>Probabilidad de SC/VSC en las próximas vueltas basado en historial y clima.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+              <InlineField label="Año" value={scForm.Year} onChange={v => setScForm(f => ({ ...f, Year: v }))} />
+              <InlineField label="Temp. Pista" value={scForm.TrackTemp} onChange={v => setScForm(f => ({ ...f, TrackTemp: v }))} />
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--f1-text-dim)', display: 'block', marginBottom: 4 }}>Lluvia</label>
+                <Select 
+                  value={scForm.Rainfall} 
+                  onChange={v => setScForm(f => ({ ...f, Rainfall: parseInt(v) }))}
+                  options={[{value: 0, label: 'No'}, {value: 1, label: 'Sí'}]}
+                  style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                />
+              </div>
+            </div>
             <button className="btn-primary" style={{ width: '100%', background: '#FF8000' }}
-              onClick={() => run('sc', predictSafetyCar)}
+              onClick={() => run('sc', predictSafetyCar, scForm)}
               disabled={loading.sc}>
               {loading.sc ? 'Escaneando...' : 'Evaluar Riesgo'}
             </button>
@@ -220,10 +220,10 @@ export default function Predictions() {
                 <h3 style={{ margin: 0, fontSize: 16 }}>Estado del Monoplaza</h3>
               </div>
               <p style={{ fontSize: 13, color: 'var(--f1-text-muted)', lineHeight: 1.5 }}>
-                Basado en el <strong>Delta de Vuelta ({form.LapDelta}s)</strong> y la <strong>Media Móvil ({form.RollingLapTime}s)</strong>, el sistema detecta 
-                {form.LapDelta > 0.5 ? ' una degradación crítica ' : ' un ritmo constante '} 
-                en el compuesto <strong>{form.Compound}</strong>. La temperatura de pista de <strong>{form.TrackTemp}°C</strong> sugiere un desgaste 
-                {form.TrackTemp > 40 ? ' acelerado ' : ' moderado '} por ampollamiento (blistering).
+                El sistema de IA monitoriza constantemente los deltas de tiempo y la degradación térmica. 
+                Los modelos actuales han sido entrenados con datos históricos de la temporada 2023, permitiendo identificar patrones de desgaste 
+                y probabilidad de incidentes en tiempo real. 
+                {pitForm.LapDelta > 0.4 ? ' Se observa una pérdida de ritmo significativa.' : ' El ritmo parece estable bajo las condiciones actuales.'}
               </p>
             </div>
             <div style={{ width: 200, padding: 16, background: 'var(--f1-surface-2)', borderRadius: 4, textAlign: 'center' }}>
