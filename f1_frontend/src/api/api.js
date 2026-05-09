@@ -80,6 +80,12 @@ export const predictMechanicalFailure = (payload) =>
 export const predictPodium = (payload) =>
   API.post('/api/predict/podium', payload).then(r => r.data);
 
+export const predictPitStop = (payload) =>
+  API.post('/api/predict/pit-stop', payload).then(r => r.data);
+
+export const predictTyreStrategy = (payload) =>
+  API.post('/api/predict/tyre-strategy', payload).then(r => r.data);
+
 export const getFeatureImportance = (model) =>
   API.get(`/api/predict/feature-importance/${model}`).then(r => r.data);
 

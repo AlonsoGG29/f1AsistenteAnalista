@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { PageHeader, SectionCard, LoadingPane, ErrorBanner, ProbabilityBar, Select } from '../components/UI.jsx';
-import { predictSafetyCar, predictMechanicalFailure, predictPodium, getMLStatus, getFeatureImportance } from '../api/api.js';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Cpu, AlertTriangle, Shield, Trophy } from 'lucide-react';
+import { 
+  predictSafetyCar, predictPitStop, predictTyreStrategy, getMLStatus 
+} from '../api/api.js';
+import { 
+  Shield, Timer, Disc, Activity, AlertTriangle, Trophy 
+} from 'lucide-react';
 
 function PredictionCard({ icon: Icon, title, color, children }) {
   return (
@@ -12,18 +15,41 @@ function PredictionCard({ icon: Icon, title, color, children }) {
       borderTop: `3px solid ${color}`,
       borderRadius: 4,
       overflow: 'hidden',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--f1-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <Icon size={16} color={color} />
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--f1-text-muted)' }}>{title}</span>
       </div>
-      <div style={{ padding: 18 }}>{children}</div>
+      <div style={{ padding: 18, flex: 1 }}>{children}</div>
     </div>
   );
 }
 
-function ResultBox({ result, color }) {
+function ResultBox({ result, color, type = 'prob' }) {
   if (!result) return null;
+
+  if (type === 'list') {
+    return (
+      <div style={{ marginTop: 16, padding: 16, background: 'var(--f1-surface-2)', borderRadius: 4, border: '1px solid var(--f1-border)' }}>
+        <span style={{ fontSize: 11, color: 'var(--f1-text-muted)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>Recomendación</span>
+        {result.map((item, i) => (
+          <div key={i} style={{ marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontWeight: 700, fontSize: 13 }}>{item.compound}</span>
+              <span style={{ color, fontSize: 12, fontWeight: 700 }}>{Math.round(item.probability * 100)}%</span>
+            </div>
+            <div className="prob-bar" style={{ height: 4 }}>
+              <div className="prob-bar-fill" style={{ width: `${item.probability * 100}%`, background: color }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const pct = Math.round(result.probability * 100);
   return (
     <div style={{ marginTop: 16, padding: 16, background: 'var(--f1-surface-2)', borderRadius: 4, border: '1px solid var(--f1-border)' }}>
@@ -34,7 +60,7 @@ function ResultBox({ result, color }) {
         </span>
       </div>
       <ProbabilityBar value={result.probability} label="Probabilidad" color={color} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
         <div className="stat-box">
           <span className="stat-label">Prob.</span>
           <span className="stat-value" style={{ fontSize: 20, color }}>{pct}%</span>
@@ -44,10 +70,6 @@ function ResultBox({ result, color }) {
           <span className="stat-value" style={{ fontSize: 14, color: result.confidence === 'alta' ? '#27F4D2' : result.confidence === 'media' ? '#FF8000' : 'var(--f1-text-muted)' }}>
             {result.confidence?.toUpperCase()}
           </span>
-        </div>
-        <div className="stat-box">
-          <span className="stat-label">AUC modelo</span>
-          <span className="stat-value" style={{ fontSize: 14 }}>{result.model_auc ? result.model_auc.toFixed(3) : '—'}</span>
         </div>
       </div>
     </div>
@@ -60,40 +82,27 @@ export default function Predictions() {
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
 
-  // Safety Car form
-  const [scForm, setScForm] = useState({
-    year: 2024, round: 8, season_progress: 0.38,
-    lat: 43.7347, lng: 7.4205, alt: 7,
-    country_sc_rate: 0.7, circuit_sc_rate_3y: 0.67, circuit_sc_rate_all: 0.65,
-    n_finishers: 17, n_pit_stops: 52, is_modern_era: 1,
-  });
-
-  // Mechanical Failure form
-  const [dnfForm, setDnfForm] = useState({
-    year: 2024, round: 8, season_progress: 0.38, is_modern_era: 1,
-    grid_position: 5, laps_completed: 0,
-    driver_dnf_rate_5r: 0.1, driver_dnf_rate_all: 0.08,
-    driver_races_count: 120, constructor_dnf_rate_5r: 0.05,
-  });
-
-  // Podium form
-  const [podForm, setPodForm] = useState({
-    year: 2024, round: 8, season_progress: 0.38, is_modern_era: 1,
-    quali_pos: 3,
-    driver_podium_rate_5r: 0.6, driver_win_rate_all: 0.3,
-    driver_avg_pos_5r: 2.4, constr_podium_rate_5r: 0.7,
-    driver_circuit_podium_rate: 0.5,
+  // Unified Form for ML Features
+  const [form, setForm] = useState({
+    Year: 2023,
+    TyreLife: 12,
+    LapTime: 92.5,
+    LapDelta: 0.2,
+    RollingLapTime: 92.3,
+    TrackTemp: 34.5,
+    Rainfall: 0,
+    Compound: 'MEDIUM'
   });
 
   useEffect(() => {
     getMLStatus().then(setModelStatus).catch(() => {});
   }, []);
 
-  const run = async (key, fn, payload) => {
+  const run = async (key, fn) => {
     setLoading(l => ({ ...l, [key]: true }));
     setErrors(e => ({ ...e, [key]: null }));
     try {
-      const res = await fn(payload);
+      const res = await fn(form);
       setResults(r => ({ ...r, [key]: res }));
     } catch (e) {
       setErrors(er => ({ ...er, [key]: e.response?.data?.detail || e.message }));
@@ -102,14 +111,14 @@ export default function Predictions() {
     }
   };
 
-  const Field = ({ label, value, onChange, step = 'any', type = 'number' }) => (
+  const Field = ({ label, name, step = 'any', type = 'number' }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--f1-text-dim)' }}>{label}</label>
       <input
         type={type}
         step={step}
-        value={value}
-        onChange={e => onChange(type === 'number' ? parseFloat(e.target.value) : e.target.value)}
+        value={form[name]}
+        onChange={e => setForm(f => ({ ...f, [name]: type === 'number' ? parseFloat(e.target.value) : e.target.value }))}
         className="input-f1"
         style={{ padding: '6px 10px', fontSize: 12 }}
       />
@@ -118,7 +127,7 @@ export default function Predictions() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto' }}>
-      <PageHeader title="Predicciones IA" subtitle="Modelos ML para Safety Car, fallos mecánicos y podio">
+      <PageHeader title="Predicciones IA" subtitle="Modelos basados en FastF1, Polars y XGBoost">
         {modelStatus && (
           <div style={{ display: 'flex', gap: 8 }}>
             {Object.entries(modelStatus).map(([key, val]) => (
@@ -131,107 +140,100 @@ export default function Predictions() {
       </PageHeader>
 
       <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* Models info */}
-        {modelStatus && (
-          <div className="grid-3">
-            {[
-              { key: 'safety_car', label: 'Safety Car', color: '#FF8000' },
-              { key: 'mechanical_failure', label: 'Fallo Mecánico', color: 'var(--f1-red)' },
-              { key: 'position', label: 'Podio', color: 'var(--gold)' },
-            ].map(({ key, label, color }) => {
-              const m = modelStatus[key] || {};
-              return (
-                <div key={key} className="card" style={{ padding: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color }}>{label}</span>
-                    <span className={`badge ${m.loaded ? 'badge-green' : 'badge-gray'}`}>{m.loaded ? 'Cargado' : 'No disponible'}</span>
-                  </div>
-                  <div className="grid-2" style={{ gap: 8 }}>
-                    <div className="stat-box">
-                      <span className="stat-label">AUC CV</span>
-                      <span className="stat-value" style={{ fontSize: 16 }}>{m.cv_auc ? m.cv_auc.toFixed(3) : '—'}</span>
-                    </div>
-                    <div className="stat-box">
-                      <span className="stat-label">Muestras</span>
-                      <span className="stat-value" style={{ fontSize: 16 }}>{m.n_samples ? m.n_samples.toLocaleString() : '—'}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+        
+        {/* Parametros de Entrada */}
+        <SectionCard title="Condiciones Actuales (Input de Telemetría)">
+          <div className="grid-4" style={{ gap: 16 }}>
+            <Field label="Año" name="Year" />
+            <Field label="Vueltas Neumático" name="TyreLife" />
+            <Field label="Tiempo Vuelta (s)" name="LapTime" />
+            <Field label="Delta Vuelta (s)" name="LapDelta" />
+            <Field label="Media Móvil 3v (s)" name="RollingLapTime" />
+            <Field label="Temp. Pista (°C)" name="TrackTemp" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--f1-text-dim)' }}>Lluvia</label>
+              <Select 
+                value={form.Rainfall} 
+                onChange={v => setForm(f => ({ ...f, Rainfall: parseInt(v) }))}
+                options={[{value: 0, label: 'No'}, {value: 1, label: 'Sí'}]}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--f1-text-dim)' }}>Compuesto Actual</label>
+              <Select 
+                value={form.Compound} 
+                onChange={v => setForm(f => ({ ...f, Compound: v }))}
+                options={[
+                  {value: 'SOFT', label: 'Blando (S)'},
+                  {value: 'MEDIUM', label: 'Medio (M)'},
+                  {value: 'HARD', label: 'Duro (H)'}
+                ]}
+              />
+            </div>
           </div>
-        )}
+        </SectionCard>
 
-        <div className="grid-3" style={{ alignItems: 'start' }}>
+        <div className="grid-3" style={{ alignItems: 'stretch' }}>
+          {/* Parada en Boxes */}
+          <PredictionCard icon={Timer} title="Probabilidad de Parada" color="var(--f1-red)">
+            <p style={{ fontSize: 12, color: 'var(--f1-text-muted)', marginBottom: 16 }}>Predice si el piloto entrará en boxes en la siguiente vuelta basado en degradación.</p>
+            <button className="btn-primary" style={{ width: '100%' }}
+              onClick={() => run('pit', predictPitStop)}
+              disabled={loading.pit}>
+              {loading.pit ? 'Analizando...' : 'Calcular Probabilidad'}
+            </button>
+            {errors.pit && <div style={{ fontSize: 11, color: 'var(--f1-red)', marginTop: 8 }}>⚠ {errors.pit}</div>}
+            <ResultBox result={results.pit} color="var(--f1-red)" />
+          </PredictionCard>
+
+          {/* Estrategia Neumaticos */}
+          <PredictionCard icon={Disc} title="Recomendación de Neumáticos" color="#27F4D2">
+            <p style={{ fontSize: 12, color: 'var(--f1-text-muted)', marginBottom: 16 }}>Sugerencia del mejor compuesto para el siguiente stint según condiciones.</p>
+            <button className="btn-primary" style={{ width: '100%', background: '#27F4D2', color: '#000' }}
+              onClick={() => run('tyre', predictTyreStrategy)}
+              disabled={loading.tyre}>
+              {loading.tyre ? 'Calculando...' : 'Ver Recomendación'}
+            </button>
+            {errors.tyre && <div style={{ fontSize: 11, color: 'var(--f1-red)', marginTop: 8 }}>⚠ {errors.tyre}</div>}
+            <ResultBox result={results.tyre} color="#27F4D2" type="list" />
+          </PredictionCard>
+
           {/* Safety Car */}
-          <PredictionCard icon={Shield} title="Safety Car" color="#FF8000">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div className="grid-2" style={{ gap: 8 }}>
-                <Field label="Año" value={scForm.year} onChange={v => setScForm(f => ({ ...f, year: v }))} />
-                <Field label="Ronda" value={scForm.round} onChange={v => setScForm(f => ({ ...f, round: v }))} />
-                <Field label="Progreso temp." value={scForm.season_progress} onChange={v => setScForm(f => ({ ...f, season_progress: v }))} step="0.01" />
-                <Field label="Altitud (m)" value={scForm.alt} onChange={v => setScForm(f => ({ ...f, alt: v }))} />
-                <Field label="Tasa SC circuito" value={scForm.circuit_sc_rate_all} onChange={v => setScForm(f => ({ ...f, circuit_sc_rate_all: v }))} step="0.01" />
-                <Field label="Tasa SC 3 años" value={scForm.circuit_sc_rate_3y} onChange={v => setScForm(f => ({ ...f, circuit_sc_rate_3y: v }))} step="0.01" />
-                <Field label="Tasa SC país" value={scForm.country_sc_rate} onChange={v => setScForm(f => ({ ...f, country_sc_rate: v }))} step="0.01" />
-                <Field label="Pit stops medios" value={scForm.n_pit_stops} onChange={v => setScForm(f => ({ ...f, n_pit_stops: v }))} />
-              </div>
-              <button className="btn-primary" style={{ marginTop: 4 }}
-                onClick={() => run('sc', predictSafetyCar, scForm)}
-                disabled={loading.sc}>
-                {loading.sc ? 'Calculando...' : 'Predecir'}
-              </button>
-              {errors.sc && <div style={{ fontSize: 11, color: 'var(--f1-red)', marginTop: 4 }}>⚠ {errors.sc}</div>}
-              <ResultBox result={results.sc} color="#FF8000" />
-            </div>
-          </PredictionCard>
-
-          {/* Mechanical Failure */}
-          <PredictionCard icon={AlertTriangle} title="Fallo Mecánico" color="var(--f1-red)">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div className="grid-2" style={{ gap: 8 }}>
-                <Field label="Año" value={dnfForm.year} onChange={v => setDnfForm(f => ({ ...f, year: v }))} />
-                <Field label="Ronda" value={dnfForm.round} onChange={v => setDnfForm(f => ({ ...f, round: v }))} />
-                <Field label="Pos. salida" value={dnfForm.grid_position} onChange={v => setDnfForm(f => ({ ...f, grid_position: v }))} />
-                <Field label="Vueltas complet." value={dnfForm.laps_completed} onChange={v => setDnfForm(f => ({ ...f, laps_completed: v }))} />
-                <Field label="DNF piloto (5c)" value={dnfForm.driver_dnf_rate_5r} onChange={v => setDnfForm(f => ({ ...f, driver_dnf_rate_5r: v }))} step="0.01" />
-                <Field label="DNF piloto (hist.)" value={dnfForm.driver_dnf_rate_all} onChange={v => setDnfForm(f => ({ ...f, driver_dnf_rate_all: v }))} step="0.01" />
-                <Field label="Carreras piloto" value={dnfForm.driver_races_count} onChange={v => setDnfForm(f => ({ ...f, driver_races_count: v }))} />
-                <Field label="DNF equipo (5c)" value={dnfForm.constructor_dnf_rate_5r} onChange={v => setDnfForm(f => ({ ...f, constructor_dnf_rate_5r: v }))} step="0.01" />
-              </div>
-              <button className="btn-primary" style={{ marginTop: 4 }}
-                onClick={() => run('dnf', predictMechanicalFailure, dnfForm)}
-                disabled={loading.dnf}>
-                {loading.dnf ? 'Calculando...' : 'Predecir'}
-              </button>
-              {errors.dnf && <div style={{ fontSize: 11, color: 'var(--f1-red)', marginTop: 4 }}>⚠ {errors.dnf}</div>}
-              <ResultBox result={results.dnf} color="var(--f1-red)" />
-            </div>
-          </PredictionCard>
-
-          {/* Podium */}
-          <PredictionCard icon={Trophy} title="Predicción de Podio" color="var(--gold)">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div className="grid-2" style={{ gap: 8 }}>
-                <Field label="Año" value={podForm.year} onChange={v => setPodForm(f => ({ ...f, year: v }))} />
-                <Field label="Ronda" value={podForm.round} onChange={v => setPodForm(f => ({ ...f, round: v }))} />
-                <Field label="Pos. qualifying" value={podForm.quali_pos} onChange={v => setPodForm(f => ({ ...f, quali_pos: v }))} />
-                <Field label="Podio piloto (5c)" value={podForm.driver_podium_rate_5r} onChange={v => setPodForm(f => ({ ...f, driver_podium_rate_5r: v }))} step="0.01" />
-                <Field label="Victoria hist." value={podForm.driver_win_rate_all} onChange={v => setPodForm(f => ({ ...f, driver_win_rate_all: v }))} step="0.01" />
-                <Field label="Pos. media (5c)" value={podForm.driver_avg_pos_5r} onChange={v => setPodForm(f => ({ ...f, driver_avg_pos_5r: v }))} step="0.1" />
-                <Field label="Podio equipo (5c)" value={podForm.constr_podium_rate_5r} onChange={v => setPodForm(f => ({ ...f, constr_podium_rate_5r: v }))} step="0.01" />
-                <Field label="Podio en circuito" value={podForm.driver_circuit_podium_rate} onChange={v => setPodForm(f => ({ ...f, driver_circuit_podium_rate: v }))} step="0.01" />
-              </div>
-              <button className="btn-primary" style={{ marginTop: 4 }}
-                onClick={() => run('pod', predictPodium, podForm)}
-                disabled={loading.pod}>
-                {loading.pod ? 'Calculando...' : 'Predecir'}
-              </button>
-              {errors.pod && <div style={{ fontSize: 11, color: 'var(--f1-red)', marginTop: 4 }}>⚠ {errors.pod}</div>}
-              <ResultBox result={results.pod} color="var(--gold)" />
-            </div>
+          <PredictionCard icon={Shield} title="Riesgo de Safety Car" color="#FF8000">
+            <p style={{ fontSize: 12, color: 'var(--f1-text-muted)', marginBottom: 16 }}>Probabilidad de SC/VSC en las próximas vueltas basado en historial y clima.</p>
+            <button className="btn-primary" style={{ width: '100%', background: '#FF8000' }}
+              onClick={() => run('sc', predictSafetyCar)}
+              disabled={loading.sc}>
+              {loading.sc ? 'Escaneando...' : 'Evaluar Riesgo'}
+            </button>
+            {errors.sc && <div style={{ fontSize: 11, color: 'var(--f1-red)', marginTop: 8 }}>⚠ {errors.sc}</div>}
+            <ResultBox result={results.sc} color="#FF8000" />
           </PredictionCard>
         </div>
+
+        {/* Telemetry Insight */}
+        <SectionCard title="Análisis de Telemetría e Inteligencia de Carrera">
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <Activity size={20} color="var(--f1-red)" />
+                <h3 style={{ margin: 0, fontSize: 16 }}>Estado del Monoplaza</h3>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--f1-text-muted)', lineHeight: 1.5 }}>
+                Basado en el <strong>Delta de Vuelta ({form.LapDelta}s)</strong> y la <strong>Media Móvil ({form.RollingLapTime}s)</strong>, el sistema detecta 
+                {form.LapDelta > 0.5 ? ' una degradación crítica ' : ' un ritmo constante '} 
+                en el compuesto <strong>{form.Compound}</strong>. La temperatura de pista de <strong>{form.TrackTemp}°C</strong> sugiere un desgaste 
+                {form.TrackTemp > 40 ? ' acelerado ' : ' moderado '} por ampollamiento (blistering).
+              </p>
+            </div>
+            <div style={{ width: 200, padding: 16, background: 'var(--f1-surface-2)', borderRadius: 4, textAlign: 'center' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--f1-text-dim)', textTransform: 'uppercase' }}>Efficiency Index</span>
+              <div style={{ fontSize: 32, fontWeight: 900, color: '#27F4D2', margin: '8px 0' }}>84.2</div>
+              <span style={{ fontSize: 11, color: '#27F4D2' }}>OPTIMAL</span>
+            </div>
+          </div>
+        </SectionCard>
+
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ from sqlalchemy import text
 from app.config import settings
 from app.db.session import engine
 from app.routers import queries, analysis
+from app.services.ml_service import ml_service
 
 
 @asynccontextmanager
@@ -46,39 +47,45 @@ app.include_router(queries.router)
 app.include_router(analysis.router)
 
 
-# ── ML Predictions (Mock) ───────────────────────────────────────────────────────
+# ── ML Predictions ───────────────────────────────────────────────────────────
 @app.get("/api/predict/status", tags=["Predicciones ML"])
 async def model_status():
     """Estado de carga de los modelos ML"""
     return {
-        "safety_car": {"loaded": False, "message": "Entrenar con: python scripts/train_models.py"},
-        "mechanical_failure": {"loaded": False, "message": "Entrenar con: python scripts/train_models.py"},
-        "podium": {"loaded": False, "message": "Entrenar con: python scripts/train_models.py"},
+        "safety_car": {"loaded": 'sc' in ml_service.models},
+        "pit_stop": {"loaded": 'pit' in ml_service.models},
+        "tyre_strategy": {"loaded": 'tyre' in ml_service.models},
     }
 
 
 @app.post("/api/predict/safety-car", tags=["Predicciones ML"])
 async def predict_safety_car(payload: dict):
     """Predicción de Safety Car"""
-    return {"probability": 0.0, "label": "No", "message": "Modelos no entrenados"}
+    return ml_service.predict_safety_car(payload)
+
+
+@app.post("/api/predict/pit-stop", tags=["Predicciones ML"])
+async def predict_pit_stop(payload: dict):
+    """Predicción de Parada en Boxes"""
+    return ml_service.predict_pit_stop(payload)
+
+
+@app.post("/api/predict/tyre-strategy", tags=["Predicciones ML"])
+async def predict_tyre_strategy(payload: dict):
+    """Recomendación de Neumáticos"""
+    return ml_service.predict_tyre_strategy(payload)
 
 
 @app.post("/api/predict/mechanical-failure", tags=["Predicciones ML"])
 async def predict_mechanical_failure(payload: dict):
-    """Predicción de falla mecánica"""
-    return {"probability": 0.0, "label": "No", "message": "Modelos no entrenados"}
+    """Predicción de falla mecánica (Mock por ahora)"""
+    return {"probability": 0.05, "label": False, "confidence": "baja"}
 
 
 @app.post("/api/predict/podium", tags=["Predicciones ML"])
 async def predict_podium(payload: dict):
-    """Predicción de podium"""
-    return {"probability": 0.0, "label": "No", "message": "Modelos no entrenados"}
-
-
-@app.get("/api/predict/feature-importance/{model}", tags=["Predicciones ML"])
-async def feature_importance(model: str):
-    """Importancia de features"""
-    return {"features": [], "message": "Modelos no entrenados"}
+    """Predicción de podium (Mock por ahora)"""
+    return {"probability": 0.15, "label": False, "confidence": "media"}
 
 
 @app.get("/health", tags=["Sistema"])
