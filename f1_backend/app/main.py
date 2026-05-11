@@ -50,42 +50,74 @@ app.include_router(analysis.router)
 # ── ML Predictions ───────────────────────────────────────────────────────────
 @app.get("/api/predict/status", tags=["Predicciones ML"])
 async def model_status():
-    """Estado de carga de los modelos ML"""
-    return {
-        "safety_car": {"loaded": 'sc' in ml_service.models},
-        "pit_stop": {"loaded": 'pit' in ml_service.models},
-        "tyre_strategy": {"loaded": 'tyre' in ml_service.models},
-    }
+    """Estado de carga de los modelos ML y información de features"""
+    return ml_service.get_model_status()
 
 
 @app.post("/api/predict/safety-car", tags=["Predicciones ML"])
 async def predict_safety_car(payload: dict):
-    """Predicción de Safety Car"""
+    """
+    Predicción de Safety Car
+    
+    Parámetros esperados:
+    - Circuit_Risk_Score: float (0-1)
+    - Adjusted_Risk: float (0-1)
+    - TrackType: str ('Street' o 'Permanent')
+    - Rainfall_Any: int (0 o 1)
+    - TrackTemp_Avg: float (temperatura en °C)
+    """
     return ml_service.predict_safety_car(payload)
 
 
 @app.post("/api/predict/pit-stop", tags=["Predicciones ML"])
 async def predict_pit_stop(payload: dict):
-    """Predicción de Parada en Boxes"""
+    """
+    Predicción de Parada en Boxes
+    
+    Parámetros esperados:
+    - Year: int (temporada)
+    - TyreLife: int (vueltas con neumático)
+    - LapTime: float o str (tiempo de vuelta en segundos o format min:ss.ms)
+    - LapDelta: float (diferencia respecto vuelta anterior)
+    - RollingLapTime: float (media móvil últimas 3 vueltas)
+    - TrackTemp: float (temperatura del circuito)
+    - Rainfall: int (0 o 1)
+    - TrackType: str ('Street' o 'Permanent')
+    - Compound: str ('HARD', 'MEDIUM', 'SOFT', 'INTERMEDIATE', 'WET')
+    """
     return ml_service.predict_pit_stop(payload)
 
 
 @app.post("/api/predict/tyre-strategy", tags=["Predicciones ML"])
 async def predict_tyre_strategy(payload: dict):
-    """Recomendación de Neumáticos"""
+    """
+    Recomendación de Neumáticos para próxima parada
+    
+    Parámetros: mismo que predict_pit_stop
+    """
     return ml_service.predict_tyre_strategy(payload)
 
 
 @app.post("/api/predict/mechanical-failure", tags=["Predicciones ML"])
 async def predict_mechanical_failure(payload: dict):
-    """Predicción de falla mecánica (Mock por ahora)"""
-    return {"probability": 0.05, "label": False, "confidence": "baja"}
+    """Predicción de falla mecánica (Mock)"""
+    return {
+        "probability": 0.05,
+        "label": False,
+        "confidence": "baja",
+        "description": "Predicción heurística de falla mecánica"
+    }
 
 
 @app.post("/api/predict/podium", tags=["Predicciones ML"])
 async def predict_podium(payload: dict):
-    """Predicción de podium (Mock por ahora)"""
-    return {"probability": 0.15, "label": False, "confidence": "media"}
+    """Predicción de podium (Mock)"""
+    return {
+        "probability": 0.15,
+        "label": False,
+        "confidence": "media",
+        "description": "Predicción heurística de podium"
+    }
 
 
 @app.get("/health", tags=["Sistema"])
