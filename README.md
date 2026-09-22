@@ -104,61 +104,13 @@ Estas salidas deben interpretarse como apoyo analítico y no como certezas ni co
 
 ## Arquitectura
 
-```text
-                +----------------------+
-                |  React + Vite        |
-                |  Dashboard y vistas  |
-                +----------+-----------+
-                           |
-                           | HTTP / JSON
-                           v
-                +----------------------+
-                |  FastAPI             |
-                |  Consultas y ML      |
-                +-----+------------+---+
-                      |            |
-                      |            +------------------+
-                      v                               v
-             +----------------+              +----------------+
-             | PostgreSQL     |              | Modelos ML     |
-             | Histórico F1   |              | XGBoost/joblib |
-             +----------------+              +--------+-------+
-                                                     ^
-                                                     |
-                                            +--------+-------+
-                                            | FastF1         |
-                                            | Ingesta y      |
-                                            | feature engine |
-                                            +----------------+
-```
+![Esquema de proyecto](https://live.staticflickr.com/65535/55544194894_2a8e4601b8_b.jpg)
+
 
 ## Estructura del repositorio
 
-```text
-.
-├── insertarBBDD_molde.py       # Descarga y carga del histórico de Kaggle
-├── f1_backend/                 # API REST y acceso a PostgreSQL
-│   ├── app/
-│   │   ├── main.py             # Aplicación FastAPI y endpoints ML
-│   │   ├── config.py           # Configuración mediante variables de entorno
-│   │   ├── models/             # Modelos ORM
-│   │   ├── schemas/            # Schemas de entrada y salida
-│   │   ├── routers/            # Rutas de consultas y análisis
-│   │   └── services/           # Lógica de negocio y servicio ML
-│   ├── tests/                  # Pruebas del backend
-│   └── requirements.txt
-├── f1_frontend/                # Aplicación React/Vite
-│   ├── src/pages/              # Dashboard, análisis, predicciones, etc.
-│   ├── src/components/         # Componentes reutilizables
-│   └── package.json
-└── f1_ml/                     # Ingesta, feature engineering y entrenamiento
-    ├── ingestion.py            # Descarga de sesiones mediante FastF1
-    ├── features.py             # Construcción de variables de ML
-    ├── trainer.py              # Entrenamiento de modelos
-    ├── quick_train.py          # Ejecución completa del pipeline
-    ├── models/                 # Modelos .joblib entrenados
-    └── notebooks/              # Exploración y experimentación
-```
+![Estructura de proyecto](https://live.staticflickr.com/65535/55543009132_ec541e431c_b.jpg)
+
 
 ## Tecnologías
 
@@ -290,8 +242,8 @@ python verify_db.py
 
 ## Referencias
 
-- [FastF1](https://docs.fastf1.dev/)
-- [XGBoost](https://xgboost.readthedocs.io/)
-- [Polars](https://docs.pola.rs/)
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [React](https://react.dev/)
+[![FastF1](https://img.shields.io/badge/Data-FastF1-E10600?style=flat-square&logo=python&logoColor=white)](https://docs.fastf1.dev/)
+[![XGBoost](https://img.shields.io/badge/ML-XGBoost-EB5424?style=flat-square&logo=xgboost&logoColor=white)](https://xgboost.readthedocs.io/)
+[![Polars](https://img.shields.io/badge/Data-Polars-CD7F32?style=flat-square&logo=polars&logoColor=white)](https://docs.pola.rs/)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
