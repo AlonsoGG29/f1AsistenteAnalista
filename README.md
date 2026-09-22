@@ -1,8 +1,9 @@
-# F1 Asistente Analista
+# F1ANALYST: ANALISTA DE F1 FULL-STACK + PREDICCIÓN CON IA
+![F1Analytics](https://live.staticflickr.com/65535/55544280676_0f4256793a_b.jpg)
 
 Plataforma de análisis, visualización y predicción aplicada a datos históricos de Fórmula 1. El proyecto combina una base de datos histórica procedente de Kaggle, datos de sesiones y telemetría obtenidos con FastF1 y modelos de Machine Learning para convertir datos de carrera en información útil para el análisis deportivo y la toma de decisiones.
 
-## Propuesta de valor
+## PROPUESTA DE VALOR
 
 F1 Asistente Analista permite consultar qué ha ocurrido en la Fórmula 1 y detectar qué podría ocurrir durante una carrera:
 
@@ -15,7 +16,7 @@ F1 Asistente Analista permite consultar qué ha ocurrido en la Fórmula 1 y dete
 
 El sistema está pensado tanto para analistas y aficionados avanzados como para equipos de producto, medios, plataformas de contenido y perfiles comerciales que necesiten convertir datos complejos de F1 en indicadores comprensibles.
 
-## Qué contiene el proyecto
+## QUÉ CONTIENE EL PROYECTO
 
 ### Aplicación web
 
@@ -31,6 +32,7 @@ El frontend ofrece una interfaz para consultar y visualizar:
 - Chat de F1 preparado para una futura integración con servicios de IA y consultas en lenguaje natural.
 
 Está construido con React, Vite, React Router, Recharts, Axios, Tailwind CSS, Framer Motion y Lucide React.
+![Vista general de la app](https://live.staticflickr.com/65535/55544210031_dd7982675c_b.jpg)
 
 ### API y capa de datos
 
@@ -46,13 +48,13 @@ El backend expone una API REST con FastAPI y SQLAlchemy asíncrono. Se conecta a
 - Estadísticas históricas por circuito.
 - Acceso a los tres modelos predictivos.
 
-La documentación interactiva de la API está disponible en `/docs` cuando el backend está ejecutándose.
+![Puntos del piloto](https://live.staticflickr.com/65535/55544210021_87b59d51d8_c.jpg)
 
 ### Pipeline de Machine Learning
 
 El módulo `f1_ml` contiene la ingesta, preparación de variables, entrenamiento y modelos serializados. El pipeline usa FastF1 como fuente principal de datos de sesiones para construir datasets a nivel de vuelta y de Gran Premio.
 
-## Fuentes de datos
+## FUENTES DE DATOS
 
 ### Datos históricos de Kaggle
 
@@ -73,46 +75,45 @@ FastF1 se utiliza para obtener información detallada de sesiones y telemetría,
 
 Los datasets generados por el módulo ML pueden incluir datos de las temporadas 2020-2024, mientras que la base histórica de la aplicación cubre un periodo más amplio, documentado en el backend hasta 2024.
 
-## Predicciones con IA
+## PREDICCIONES CON IA
 
 Las predicciones actuales están implementadas con modelos `XGBClassifier` entrenados sobre datos históricos procesados. Devuelven probabilidades, etiqueta interpretada, nivel de confianza y una descripción para facilitar su consumo desde la interfaz.
 
-### 1. Probabilidad de parada en boxes
+![Predicción de parada](https://live.staticflickr.com/65535/55544210041_37cbe55fda_z.jpg)
 
+### 1. Probabilidad de parada en boxes
 - **Modelo:** `pit_predictor.joblib`.
-- **Granularidad:** vuelta del piloto.
-- **Objetivo:** estimar la probabilidad de que el piloto pare en la próxima vuelta.
-- **Variables principales:** temporada, vida del neumático, tiempo de vuelta, diferencia respecto a la vuelta anterior, media móvil de ritmo, temperatura, lluvia, tipo de circuito y compuesto actual.
+- **Granularidad:** Vuelta del piloto.
+- **Objetivo:** Estimar la probabilidad de que el piloto pare en la próxima vuelta.
+- **Variables principales:** Vida del neumático, tiempo de vuelta, diferencia respecto a la vuelta anterior, media móvil de ritmo, temperatura, lluvia y compuesto actual.
 
 ### 2. Recomendación del mejor neumático
-
 - **Modelos:** `tyre_predictor.joblib` y `tyre_mapping.joblib`.
-- **Granularidad:** vuelta del piloto.
-- **Objetivo:** estimar qué compuesto es más conveniente en las condiciones actuales.
-- **Salida:** probabilidades para `HARD`, `MEDIUM`, `SOFT`, `INTERMEDIATE` y `WET`.
-- **Tratamiento específico:** detección de lluvia y ajuste de la recomendación hacia neumáticos intermedios o de lluvia cuando corresponde.
+- **Granularidad:** Vuelta del piloto.
+- **Objetivo:** Estimar qué compuesto es más conveniente en las condiciones actuales.
+- **Salida:** Probabilidades para `HARD`, `MEDIUM`, `SOFT`, `INTERMEDIATE` y `WET`.
+- **Tratamiento específico:** Detección de lluvia y ajuste de la recomendación hacia neumáticos intermedios o de lluvia cuando corresponde.
 
 ### 3. Probabilidad de Safety Car
-
 - **Modelo:** `sc_predictor.joblib`.
 - **Granularidad:** Gran Premio.
-- **Objetivo:** estimar el riesgo de Safety Car, Virtual Safety Car o bandera roja.
-- **Variables principales:** riesgo histórico del circuito, riesgo ajustado, tipo de trazado, presencia de lluvia y temperatura media de pista.
-- **Regla de contexto:** el riesgo se ajusta especialmente para circuitos urbanos con lluvia.
+- **Objetivo:** Estimar el riesgo de Safety Car, Virtual Safety Car o bandera roja.
+- **Variables principales:** Riesgo histórico del circuito, riesgo ajustado, tipo de trazado, presencia de lluvia y temperatura media de pista.
+- **Regla de contexto:** El riesgo se ajusta especialmente para circuitos urbanos con lluvia.
 
 Estas salidas deben interpretarse como apoyo analítico y no como certezas ni como sustituto del criterio de un estratega, comentarista o analista deportivo.
 
-## Arquitectura
+## ARQUITECTURA
 
 ![Esquema de proyecto](https://live.staticflickr.com/65535/55544194894_2a8e4601b8_b.jpg)
 
 
-## Estructura del repositorio
+## ESTRUCTURA DEL REPOSITORIO
 
 ![Estructura de proyecto](https://live.staticflickr.com/65535/55543009132_ec541e431c_b.jpg)
 
 
-## Tecnologías
+## TECNOLOGÍAS
 
 | Capa | Tecnologías |
 | --- | --- |
@@ -123,7 +124,7 @@ Estas salidas deben interpretarse como apoyo analítico y no como certezas ni co
 | Machine Learning | XGBoost, scikit-learn, Polars, pandas, joblib |
 | Visualización y exploración | Recharts, Matplotlib, Seaborn, Jupyter |
 
-## Puesta en marcha
+## PUESTA EN MARCHA
 
 ### Requisitos
 
@@ -187,7 +188,7 @@ python quick_train.py
 
 La primera ingesta con FastF1 puede tardar varias horas según las temporadas solicitadas, la conexión y la caché local. Los modelos generados se guardan en `f1_ml/models/`.
 
-## Endpoints principales
+## ENDPOINTS PRINCIPALES
 
 | Método | Ruta | Uso |
 | --- | --- | --- |
@@ -204,7 +205,7 @@ La primera ingesta con FastF1 puede tardar varias horas según las temporadas so
 | `POST` | `/api/predict/tyre-strategy` | Recomendación de neumáticos |
 | `POST` | `/api/predict/safety-car` | Riesgo de Safety Car |
 
-## Utilidad para negocio y usuarios comerciales
+## UTILIDAD PARA NEGOCIO Y USO COMERCIAL
 
 La plataforma puede servir como base para:
 
@@ -216,16 +217,15 @@ La plataforma puede servir como base para:
 
 El valor comercial puede crecer incorporando históricos actualizados automáticamente, perfiles de usuario, alertas en directo, exportación de informes, modelos calibrados por circuito y conexión con fuentes oficiales o feeds live.
 
-## Limitaciones y estado actual
+## LIMITACIONES Y ESTADO ACTUAL
 
 - Las probabilidades dependen de la calidad, cobertura y actualidad de los datos de entrenamiento.
 - FastF1 requiere descargar y procesar sesiones; la disponibilidad de datos puede variar y existen límites prácticos de tiempo y caché.
 - Los modelos predicen escenarios probables, no resultados garantizados.
 - Los endpoints de podio y fallo mecánico presentes en el código son demostrativos/mock y no forman parte de las tres predicciones ML principales.
 - La vista de circuitos está preparada en la navegación, pero su experiencia específica continúa en desarrollo.
-- Las integraciones de chat con Azure AI y text-to-SQL están contempladas como evolución del producto, no como requisito para ejecutar el núcleo analítico actual.
 
-## Pruebas
+## PRUEBAS DE FALLO
 
 Para ejecutar las pruebas del backend:
 
@@ -240,7 +240,7 @@ También puede comprobarse la conexión y el contenido de PostgreSQL con:
 python verify_db.py
 ```
 
-## Referencias
+## REFERENCIAS
 
 [![FastF1](https://img.shields.io/badge/Data-FastF1-E10600?style=flat-square&logo=python&logoColor=white)](https://docs.fastf1.dev/)
 [![XGBoost](https://img.shields.io/badge/ML-XGBoost-EB5424?style=flat-square&logo=xgboost&logoColor=white)](https://xgboost.readthedocs.io/)
